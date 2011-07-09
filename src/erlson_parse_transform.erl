@@ -20,7 +20,11 @@
 %%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -module(erlson_parse_transform).
+
 -export([parse_transform/2]).
+
+-export([make_dict_new/2, make_dict_store/2, make_dict_fetch/3]).
+-export([is_valid_dict_path/1]).
 
 
 % "Abstract Format" chapter from ERTS User Guide
@@ -169,23 +173,20 @@ make_call(LINE, ModName, FunName, Args) ->
     Res.
 
 
-is_valid_dict_path({record_field,_LINE,E,_F}) ->
-    case E of
-        % firt two clauses: 'record_field' form a sequence of dot-separated
-        % atoms, for example: foo.bar.baz , foo, .foo
-        _ when is_atom(E) -> false;
-        {'atom', _, _} -> false;
+% firt two clauses: 'record_field' form a sequence of dot-separated atoms,
+% for example: foo.bar.baz , foo, .foo
+is_valid_dict_path(E) when is_atom(E) -> false;
+is_valid_dict_path({'atom', _, _}) -> false;
 
-        % make sure we don't interfere with Mnesia/QLC by treating '_' as a
-        % valid variable
-        {'var', _, '_'} -> false;
+% make sure we don't interfere with Mnesia/QLC by treating '_' as a valid
+% variable
+is_valid_dict_path({'var', _, '_'}) -> false;
 
-        % got another path element, calling recursively:
-        {record_field,_LINE1,_E1,_F1} -> is_valid_dict_path(E);
+% got another path element, calling recursively:
+is_valid_dict_path({record_field,_LINE,E,_F}) -> is_valid_dict_path(E);
 
-        % everything else should be OK
-        _ -> true
-    end.
+% everything else should be OK
+is_valid_dict_path(_) -> true.
 
 
 %
