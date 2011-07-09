@@ -138,7 +138,7 @@ pattern(X, S) ->
     expr(X, S#state{context = pattern}).
 
 
-% make dict:store(K1, V1, dict:store(K2, V2, dict:store(K3, V3, ...)))
+% make erlson:store(K1, V1, erlson:store(K2, V2, erlson:store(K3, V3, ...)))
 make_dict_store(InitDict, L) ->
     make_dict_store_1(InitDict, lists:reverse(L)).
 
@@ -146,17 +146,18 @@ make_dict_store_1(InitDict, []) -> InitDict;
 make_dict_store_1(InitDict, [H|T]) ->
     {record_field,LINE,Key,Value} = H,
     Args = [Key, Value, make_dict_store_1(InitDict, T)],
-    Res = make_call(LINE, 'dict', 'store', Args),
+    Res = make_call(LINE, 'erlson', 'store', Args),
     %?PRINT("make_dict_store_1: ~p~n", [Res]),
     Res.
 
 
-make_dict_new(LINE) ->
-    make_call(LINE, 'dict', 'new', []).
+make_dict_new(LINE, L) ->
+    InitDict = {nil, LINE},
+    make_dict_store(InitDict, L).
 
 
 make_dict_fetch(LINE, FieldName, Dict) ->
-    make_call(LINE, 'dict', 'fetch', [FieldName, Dict]).
+    make_call(LINE, 'erlson', 'fetch', [FieldName, Dict]).
 
 
 make_call(LINE, ModName, FunName, Args) ->
@@ -173,18 +174,17 @@ make_call(LINE, ModName, FunName, Args) ->
 
 % this node was returned by the customized Erlang parser
 expr({record,LINE,'',L}, S) when ?is_context(body) ->
-    % convert #{...} to dict:store(Key, Value, dict:store(..., dict:new()))
-    InitDict = make_dict_new(LINE),
-    make_dict_store(InitDict, ?field_list(L));
+    % convert #{...} to erlson:store(Key, Value, erlson:store(..., []))
+    make_dict_new(LINE, ?field_list(L));
 
 % this node was returned by the customized Erlang parser
 expr({record,_LINE,E,'',L}, S) when ?is_context(body) ->
-    % convert D#{...} to dict:store(Key, Value, dict:store(..., D))
+    % convert D#{...} to erlson:store(Key, Value, erlson:store(..., D))
     make_dict_store(_InitDict = ?expr(E), ?field_list(L));
 
 % this node was returned by the customized Erlang parser
 expr({record_field,LINE,E,'',F}, S) when ?is_context(body) ->
-    % convert #X.foo to dict:fetch(foo, X)
+    % convert #X.foo to erlson:fetch(foo, X)
     make_dict_fetch(LINE, F, ?expr(E));
 
 % NOTE: reusing Mensia field access syntax for accessing dict members
@@ -193,7 +193,7 @@ expr({record_field,LINE,E,F}, S) when ?is_context(body),
              not (is_tuple(E) % prohibit using ".foo" without leading expression
                   andalso element(1, E) == 'atom'
                   andalso element(3, E) == '') ->
-    % convert X.foo to dict:fetch(foo, X)
+    % convert X.foo to erlson:fetch(foo, X)
     %?PRINT("record_field: ~p~n", [E]),
     make_dict_fetch(LINE, F, ?expr(E));
 

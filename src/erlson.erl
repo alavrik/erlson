@@ -19,56 +19,44 @@
 %%  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 %%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
--module(erlson_tests).
-%-compile(export_all).
-
--include("../include/erlson.hrl").
--include_lib("eunit/include/eunit.hrl").
-
-
-basic_test() ->
-    % creating an empty dictionary
-    _ = #{},
-
-    % associating foo with 1
-    D = #{foo = 1},
-    1 = D.foo,
-    1 = #{foo = 1}.foo,
-
-    % setting foo to foo + 1 and baz to 100
-    D1 = D#{foo = D.foo + 1}#{baz = 100},
-    2 = D1.foo,
-    100 = D1.baz,
-
-    % accessing undefined field
-    {'EXIT', {'erlson_not_found', _}} = (catch D.bar),
-
-    % several elements
-    D2 = D#{bar = 1, fum = 10, obj = D},
-    1 = D2.bar,
-    10 = D2.fum,
-
-    % accessing field of a dict included in another dict
-    1 = D2.obj.foo,
-    ok.
+%
+% Erlson runtime library
+%
+-module(erlson).
+-export([fetch/2, store/3]).
 
 
-grammar_test() ->
-    dict_grammar(#{foo = 1}),
-    foo(),
-    dict_grammar1(),
-    foo1(),
-    dict_grammar2(),
-    foo2(),
-    dict_grammar3(),
-    foo3(),
-    ok.
+% dictionary represented as an ordered list of name-value pairs
+-type orddict() :: [ {name(), value()} ].
+-type name() :: atom() | binary().
+-type value() :: name().
 
-dict_grammar(D) -> D.foo, D. foo() -> ok.
 
-dict_grammar1() -> #{x = 1}. foo1() -> ok.
+-spec fetch/2 :: (
+    Name :: atom(),
+    Dict :: orddict() ) -> value().
 
-dict_grammar2() -> #{x = 1}.x. foo2() -> ok.
+fetch(Name, Dict) ->
+    try
+        fetch_val(Name, Dict)
+    catch
+        'erlson_not_found' ->
+            erlang:error('erlson_not_found', [Name, Dict])
+    end.
 
-dict_grammar3() -> D = #{x = 1}, D.x. foo3() -> ok.
+
+fetch_val(Name, [{N, _V} | T]) when Name > N ->
+    fetch_val(Name, T);
+fetch_val(Name, [{N, V} | _T]) when Name =:= N -> V;
+fetch_val(_Name, _) ->
+    throw('erlson_not_found').
+
+
+-spec store/3 :: (
+    Name :: atom(),
+    Value :: any(),
+    Dict :: orddict() ) -> orddict().
+
+store(Name, Value, Dict) ->
+    orddict:store(Name, Value, Dict).
 

@@ -1,4 +1,4 @@
-ERL_SOURCES = erl_parse.erl erlson_parse_transform.erl erlson_tests.erl
+ERL_SOURCES = erl_parse.erl erlson_parse_transform.erl erlson.erl erlson_tests.erl
 TEST = erlson_tests
 
 ERL = erl
@@ -14,7 +14,7 @@ ERL_OBJECTS = $(ERL_SOURCES:%.erl=$(EBIN_DIR)/%.beam)
 all: $(ERL_SOURCES) $(ERL_OBJECTS) expand test 
 
 
-erlson_tests.erl: erlson_parse_transform.erl
+erlson_tests.erl: erlson_parse_transform.erl erlson.erl
 	#cp ../test/$@ $@
 	touch -r $< $@
 
