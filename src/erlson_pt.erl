@@ -19,7 +19,7 @@
 %%  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 %%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
--module(erlson_parse_transform).
+-module(erlson_pt).
 
 -export([parse_transform/2]).
 
