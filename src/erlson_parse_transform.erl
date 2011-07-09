@@ -151,6 +151,14 @@ make_dict_store_1(InitDict, [H|T]) ->
     Res.
 
 
+make_dict_new(LINE) ->
+    make_call(LINE, 'dict', 'new', []).
+
+
+make_dict_fetch(LINE, FieldName, Dict) ->
+    make_call(LINE, 'dict', 'fetch', [FieldName, Dict]).
+
+
 make_call(LINE, ModName, FunName, Args) ->
     Mod = {'atom',LINE,ModName},
     Fun = {'atom',LINE,FunName},
@@ -162,14 +170,22 @@ make_call(LINE, ModName, FunName, Args) ->
 %
 % common function for traversing expressions, patterns and guard elements
 %
+
+% this node was returned by the customized Erlang parser
 expr({record,LINE,'',L}, S) when ?is_context(body) ->
-    % convert #{...} to dict:store(Key, Value, dict:store(...))
-    InitDict = make_call(LINE, 'dict', 'new', []),
+    % convert #{...} to dict:store(Key, Value, dict:store(..., dict:new()))
+    InitDict = make_dict_new(LINE),
     make_dict_store(InitDict, ?field_list(L));
 
+% this node was returned by the customized Erlang parser
 expr({record,_LINE,E,'',L}, S) when ?is_context(body) ->
     % convert D#{...} to dict:store(Key, Value, dict:store(..., D))
     make_dict_store(_InitDict = ?expr(E), ?field_list(L));
+
+% this node was returned by the customized Erlang parser
+expr({record_field,LINE,E,'',F}, S) when ?is_context(body) ->
+    % convert #X.foo to dict:fetch(foo, X)
+    make_dict_fetch(LINE, F, ?expr(E));
 
 % NOTE: reusing Mensia field access syntax for accessing dict members
 % Original use: If E is E_0.Field, a Mnesia record access inside a query.
@@ -179,7 +195,7 @@ expr({record_field,LINE,E,F}, S) when ?is_context(body),
                   andalso element(3, E) == '') ->
     % convert X.foo to dict:fetch(foo, X)
     %?PRINT("record_field: ~p~n", [E]),
-    make_call(LINE, 'dict', 'fetch', [F, ?expr(E)]);
+    make_dict_fetch(LINE, F, ?expr(E));
 
 %
 % end of special handling of 'dict' records

@@ -352,6 +352,8 @@ record_expr -> expr_max '#' record_tuple :
 	{record,?line('$2'),'$1','','$3'}.
 record_expr -> record_expr '#' atom '.' atom :
 	{record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
+record_expr -> record_expr '.' atom :
+	{record_field,?line('$2'),'$1','','$3'}.
 record_expr -> record_expr '#' atom record_tuple :
 	{record,?line('$2'),'$1',element(3, '$3'),'$4'}.
 record_expr -> record_expr '#' record_tuple :

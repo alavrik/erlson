@@ -33,6 +33,7 @@ basic_test() ->
     % associating foo with 1
     D = #{foo = 1},
     1 = D.foo,
+    1 = #{foo = 1}.foo,
 
     % setting foo to foo + 1 and baz to 100
     D1 = D#{foo = D.foo + 1}#{baz = 100},
