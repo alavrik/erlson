@@ -1,4 +1,4 @@
-%%  Copyright (c) 2010, 2011 Anton Lavrik, http://github.com/alavrik
+%%  Copyright (c) 2011 Anton Lavrik, http://github.com/alavrik
 %%  
 %%  Permission is hereby granted, free of charge, to any person obtaining
 %%  a copy of this software and associated documentation files (the
@@ -19,7 +19,7 @@
 %%  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 %%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
--module(erl_aliases).
+-module(erlson_parse_transform).
 -export([parse_transform/2]).
 
 
@@ -60,213 +60,14 @@ parse_transform(Forms, _Options) ->
 
 
 set_file(File) ->
-    put('__erl_aliases_file__', File).
+    put('__erlson_file__', File).
 
 get_file() ->
-    get('__erl_aliases_file__').
-
-
-% check wither a key is present in the dictionary
-is_key(Name, DictName) ->
-    case get(DictName) of
-        'undefined' -> false; % there is no such dictionary
-        Dict -> dict:is_key(Name, Dict)
-    end.
-
-% store a key-value pair in the dictionary; create an empty dictionary if it
-% hasn't been created before
-store(Name, Value, DictName) ->
-    Dict =
-        case get(DictName) of
-            'undefined' -> dict:new();
-            X -> X
-        end,
-    NewDict = dict:store(Name, Value, Dict),
-    put(DictName, NewDict),
-    ok.
-
-
-set_dict_alias(Name, Line) ->
-    case is_record_alias_name(Name) of
-        false -> ok;
-        true ->
-            Es = lists:concat([
-                "dict alias ", Name,
-                " conflicts with a previously defined record alias"]),
-            throw({error, Es, Line})
-    end,
-    case is_record_name(Name) of
-        false -> ok;
-        true ->
-            Es_1 = lists:concat([
-                "dict alias ", Name,
-                " conflicts with a previously defined record"]),
-            throw({error, Es_1, Line})
-    end,
-    case get_dict_alias() of
-        0 -> ok; % undefined
-        _ ->
-            Es_2 = "dict alias has been already defined; "
-                   "only one is allowed per module",
-            throw({error, Es_2, Line})
-    end,
-    put('__erl_aliases_dict__', Name).
-
-get_dict_alias() ->
-    case get('__erl_aliases_dict__') of
-        'undefined' -> 0; % this value won't match (see below)
-        X -> X
-    end.
-
-is_dict_alias(Name) -> get_dict_alias() == Name.
-
-
-is_record_name(Name) ->
-    is_key(Name, '__erl_aliases_records__').
-
-add_record_name(Name, Line) ->
-    case is_record_alias_name(Name) of
-        false -> ok;
-        true ->
-            Es = lists:concat([
-                "record ", Name,
-                " conflicts with a previously defined record alias"]),
-            throw({error, Es, Line})
-    end,
-    case is_dict_alias(Name) of
-        false -> ok;
-        true ->
-            Es_1 = lists:concat([
-                "record ", Name,
-                " conflicts with a previously defined dict alias"]),
-            throw({error, Es_1, Line})
-    end,
-    % we don't need any value to be associated with a record name at the
-    % moment
-    % XXX: store the location?
-    DictName = '__erl_aliases_records__',
-    store(Name, _Value = 'undefined', DictName).
-
-
-add_record_alias(_Name, '', Line) ->
-    % Explicitly prohibiting use of '' as an alias, because:
-    %   - it conflicts with dict syntax;
-    %   - at the same time, it is not universal -- unlike for dicts, it can't
-    %     be applied only to one record at once (or even per module).
-    Es = "use of '' as alias is prohibited",
-    throw({error, Es, Line});
-
-add_record_alias(Name, Alias, Line) ->
-    case is_record_name(Alias) of
-        false -> ok;
-        true ->
-            Es = lists:concat([
-                "record alias ", Alias,
-                " conflicts with a previously defined record"]),
-            throw({error, Es, Line})
-    end,
-    case is_dict_alias(Alias) of
-        false -> ok;
-        true ->
-            Es_1 = lists:concat([
-                "record alias ", Alias,
-                " conflicts with a previously defined dict alias"]),
-            throw({error, Es_1, Line})
-    end,
-    add_alias('__erl_record_aliases__', Name, Alias, Line).
-
-is_record_alias_name(Name) ->
-    is_key(Name, '__erl_record_aliases__').
-
-unalias_record(Name) ->
-    unalias('__erl_record_aliases__', Name).
-
-
-add_module_alias(Name, Alias, Line) ->
-    add_alias('__erl_module_aliases__', Name, Alias, Line).
-
-unalias_module(Name) ->
-    unalias('__erl_module_aliases__', Name).
-
-
-unalias_module_atom({'atom', LINE, Name}) ->
-    Name1 = unalias_module(Name),
-    {'atom', LINE, Name1};
-unalias_module_atom(X) -> X.
-
-
-% add record or module alias entry to the correspondent dictionary
-add_alias(_DictName, Name, Alias, Line) when Name == Alias ->
-    Es = lists:concat(["alias ", Alias, " is an alias of itself"]),
-    throw({error, Es, Line});
-
-add_alias(DictName, Name, Alias, Line) ->
-    ?PRINT("add ~w: ~w for ~w~n", [DictName, Alias, Name]),
-    case is_key(Alias, DictName) of
-        false -> ok;
-        true ->
-            Es = lists:concat(["duplicate alias ", Alias]),
-            throw({error, Es, Line})
-    end,
-    case is_key(Name, DictName) of
-        false -> ok;
-        true ->
-            Es_1 = lists:concat([
-                "alias definition for previously defined alias ", Name]),
-            throw({error, Es_1, Line})
-    end,
-    store(Alias, Name, DictName).
-
-
-unalias(DictName, X) ->
-    case get(DictName) of
-        'undefined' -> X;  % there is no dictionary and aliases
-        Dict ->
-            case dict:find(X, Dict) of
-                'error' -> X; % no alias; return the original name
-                {ok, Name} ->
-                    ?PRINT("unalias ~w: ~w to ~w~n", [DictName, X, Name]),
-                    Name
-            end
-    end.
+    get('__erlson_file__').
 
 
 rewrite(X = {attribute,_LINE,file,{File,_Line}}) ->
     set_file(File), [X];
-
-rewrite(X = {attribute,LINE,record,{Name,_Fields}}) ->
-    add_record_name(Name, LINE),
-    [X];
-
-rewrite({attribute,LINE,record_alias,{Alias, RecordName}})
-        when is_atom(RecordName), is_atom(Alias) ->
-    add_record_alias(RecordName, Alias, LINE),
-    [];
-
-% XXX: prohibit definition of aliases in .hrl files?
-rewrite({attribute,LINE,record_alias,X}) ->
-    %Es = lists:flatten(io_lib:format(
-    %      "invalid 'record_alias' specification ~w at line ~w", [X, LINE])),
-    %throw({error, Es});
-    Es = ["invalid 'record_alias' specification", X],
-    throw({error, Es, LINE});
-
-rewrite({attribute,LINE,module_alias,{Alias, ModuleName}})
-        when is_atom(ModuleName), is_atom(Alias) ->
-    add_module_alias(ModuleName, Alias, LINE),
-    [];
-
-rewrite({attribute,LINE,module_alias,X}) ->
-    Es = ["invalid 'module_alias' specification", X],
-    throw({error, Es, LINE});
-
-rewrite({attribute,LINE,dict_alias,X}) when is_atom(X) ->
-    set_dict_alias(X, LINE),
-    [];
-
-rewrite({attribute,LINE,dict_alias,X}) ->
-    Es = ["invalid 'dict_alias' specification", X],
-    throw({error, Es, LINE});
 
 rewrite({function,LINE,Name,Arity,L}) ->
     X = {function,LINE,Name,Arity, clause_list(L, init_state())},
@@ -282,15 +83,13 @@ rewrite(X) -> [X].
 -type context() :: body | pattern | guard.
 
 -record(state, {
-    context :: context(),
-    dict_alias :: atom() % special handling of 'dict' records is enabled
+    context :: context()
 }).
 
 
 init_state() ->
     #state{
-        context = 'undefined',
-        dict_alias = get_dict_alias()
+        context = 'undefined'
     }.
 
 
@@ -318,7 +117,6 @@ init_state() ->
 
 
 -define(is_context(Context), S#state.context == Context).
--define(is_dict_alias(Name), S#state.dict_alias == Name).
 
 
 clause(_C = {clause,LINE,Ps,Gs,B}, S) ->
@@ -364,30 +162,22 @@ make_call(LINE, ModName, FunName, Args) ->
 %
 % common function for traversing expressions, patterns and guard elements
 %
-expr({record,LINE,Name,L}, S) when ?is_dict_alias(Name), ?is_context(body) ->
-    % convert #dict{...} to dict:store(Key, Value, dict:store(...))
+expr({record,LINE,'',L}, S) when ?is_context(body) ->
+    % convert #{...} to dict:store(Key, Value, dict:store(...))
     InitDict = make_call(LINE, 'dict', 'new', []),
     make_dict_store(InitDict, ?field_list(L));
 
-expr({record,_LINE,E,Name,L}, S) when ?is_dict_alias(Name), ?is_context(body) ->
-    % convert D#dict{...} to dict:store(Key, Value, dict:store(..., D))
+expr({record,_LINE,E,'',L}, S) when ?is_context(body) ->
+    % convert D#{...} to dict:store(Key, Value, dict:store(..., D))
     make_dict_store(_InitDict = ?expr(E), ?field_list(L));
 
-expr({record_index,LINE,Name,_F}, S)
-        when ?is_dict_alias(Name), ?is_context(body) ->
-    Es = "field indexes can not be used with dict_alias",
+expr({record_index,LINE,'',_F}, S) when ?is_context(body) ->
+    Es = "field indexes can not be used with Erlson objects",
     throw({error, Es, LINE});
 
-expr({record_field,LINE,E,Name,F}, S)
-        when ?is_dict_alias(Name), ?is_context(body) ->
-    % convert X#dict.foo to dict:fetch(foo, X)
-    make_call(LINE, 'dict', 'fetch', [F, ?expr(E)]);
-
-% NOTE: highly experimental: reusing Mensia field access syntax for accessing
-% dict members
+% NOTE: reusing Mensia field access syntax for accessing dict members
 % Original use: If E is E_0.Field, a Mnesia record access inside a query.
-expr({record_field,LINE,E,F}, S)
-        when S#state.dict_alias == '', ?is_context(body),
+expr({record_field,LINE,E,F}, S) when ?is_context(body),
              not (is_tuple(E) % prohibit using ".foo" without leading expression
                   andalso element(1, E) == 'atom'
                   andalso element(3, E) == '') ->
@@ -399,16 +189,16 @@ expr({record_field,LINE,E,F}, S)
 % end of special handling of 'dict' records
 %
 expr({record,LINE,Name,L}, S) ->
-    {record,LINE,unalias_record(Name),?field_list(L)};
+    {record,LINE,Name,?field_list(L)};
 
 expr({record,LINE,E,Name,L}, S) ->
-    {record,LINE,?expr(E),unalias_record(Name),?field_list(L)};
+    {record,LINE,?expr(E),Name,?field_list(L)};
 
 expr({record_index,LINE,Name,F}, _S) ->
-    {record_index,LINE,unalias_record(Name),F};
+    {record_index,LINE,Name,F};
 
 expr({record_field,LINE,E,Name,F}, S) ->
-    {record_field,LINE,?expr(E),unalias_record(Name),F};
+    {record_field,LINE,?expr(E),Name,F};
 
 expr({match,LINE,P,E_0}, S) ->
     {match,LINE,?pattern(P),?expr(E_0)};
@@ -432,8 +222,7 @@ expr({'catch',LINE,E}, S) ->
     {'catch',LINE,?expr(E)};
 
 expr({call, LINE, {remote,LINE_1,M,F}, L}, S) ->
-    M1 = unalias_module_atom(M),
-    {call, LINE, {remote,LINE_1,?expr(M1),?expr(F)}, ?expr_list(L)};
+    {call, LINE, {remote,LINE_1,?expr(M),?expr(F)}, ?expr_list(L)};
 
 expr({call,LINE,F,L}, S) ->
     {call,LINE,?expr(F),?expr_list(L)};
@@ -476,7 +265,7 @@ expr({'receive',LINE,L}, S) ->
 expr(X = {'fun',_LINE,{function,_Name,_Arity}}, _S) ->
     X;
 expr({'fun',LINE,{function,Module,Name,Arity}}, _S) ->
-    {'fun',LINE,{function,unalias_module(Module),Name,Arity}};
+    {'fun',LINE,{function,Module,Name,Arity}};
 
 expr({'fun',LINE,{clauses,L}}, S) ->
     {'fun',LINE,{clauses,?clause_list(L)}};
