@@ -3,6 +3,7 @@ ebin
 *.beam
 *.P
 src/erl_parse.erl
+src/erl_parse_shell.erl
 
 # vim:
 *.swp

@@ -1,4 +1,4 @@
-ERL_SOURCES = erl_parse.erl erlson_pt.erl erlson.erl
+ERL_SOURCES = erl_parse.erl erl_parse_shell.erl erlson_pt.erl erlson.erl
 ERL_TESTS = erlson_tests.erl
 TEST = erlson_tests
 

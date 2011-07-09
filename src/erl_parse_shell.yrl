@@ -259,7 +259,11 @@ expr_800 -> expr_900 : '$1'.
 expr_900 -> '.' atom :
 	{record_field,?line('$1'),{atom,?line('$1'),''},'$2'}.
 expr_900 -> expr_900 '.' atom :
-	{record_field,?line('$2'),'$1','$3'}.
+	%{record_field,?line('$2'),'$1','$3'}.
+        case erlson_pt:is_valid_dict_path('$1') of
+            true -> erlson_pt:make_dict_fetch(?line('$2'), '$3', '$1');
+            false -> {record_field,?line('$2'),'$1','$3'}
+        end.
 expr_900 -> expr_max : '$1'.
 
 expr_max -> var : '$1'.
@@ -343,23 +347,27 @@ record_expr -> '#' atom '.' atom :
 record_expr -> '#' atom record_tuple :
 	{record,?line('$1'),element(3, '$2'),'$3'}.
 record_expr -> '#' record_tuple :
-	{record,?line('$1'),'','$2'}.
+	%{record,?line('$1'),'','$2'}.
+        erlson_pt:make_dict_new(?line('$1'), '$2').
 record_expr -> expr_max '#' atom '.' atom :
 	{record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
 record_expr -> expr_max '#' atom record_tuple :
 	{record,?line('$2'),'$1',element(3, '$3'),'$4'}.
 record_expr -> expr_max '#' record_tuple :
-	{record,?line('$2'),'$1','','$3'}.
+	%{record,?line('$2'),'$1','','$3'}.
+        erlson_pt:make_dict_store(_InitDict = '$1', '$3').
 record_expr -> record_expr '#' atom '.' atom :
 	{record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
 % XXX: is this useful? include anyway for completeness?
 record_expr -> record_expr '.' atom :
-	{record_field,?line('$2'),'$1','','$3'}.
+	%{record_field,?line('$2'),'$1','','$3'}.
+        erlson_pt:make_dict_fetch(?line('$2'), '$3', '$1').
 record_expr -> record_expr '#' atom record_tuple :
 	{record,?line('$2'),'$1',element(3, '$3'),'$4'}.
 % XXX: is this useful? include anyway for completeness?
 record_expr -> record_expr '#' record_tuple :
-	{record,?line('$2'),'$1','','$3'}.
+	%{record,?line('$2'),'$1','','$3'}.
+        erlson_pt:make_dict_store(_InitDict = '$1', '$3').
 
 record_tuple -> '{' '}' : [].
 record_tuple -> '{' record_fields '}' : '$2'.
