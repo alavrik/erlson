@@ -30,6 +30,12 @@ basic_test() ->
     % creating an empty dictionary
     _ = #{},
 
+    foo.bar,
+
+    foo.bar.baz,
+
+    .foo,
+
     % associating foo with 1
     D = #{foo = 1},
     1 = D.foo,
@@ -51,6 +57,16 @@ basic_test() ->
     % accessing field of a dict included in another dict
     1 = D2.obj.foo,
     ok.
+
+
+extended_test() ->
+%    (t()).foo,
+%    F = fun () -> #{foo = 1} end,
+%    (F()).foo,
+    ok.
+
+
+%t() -> #{foo = 1}.
 
 
 grammar_test() ->

@@ -43,6 +43,7 @@
 
 
 parse_transform(Forms, _Options) ->
+    ?PRINT("PARSE TRANSFORM~n", []),
     try
         lists:flatmap(fun rewrite/1, Forms)
     catch
@@ -168,34 +169,60 @@ make_call(LINE, ModName, FunName, Args) ->
     Res.
 
 
+is_valid_dict_path({record_field,_LINE,E,_F}) ->
+    case E of
+        % firt two clauses: 'record_field' form a sequence of dot-separated
+        % atoms, for example: foo.bar.baz , foo, .foo
+        _ when is_atom(E) -> false;
+        {'atom', _, _} -> false;
+
+        % make sure we don't interfere with Mnesia/QLC by treating '_' as a
+        % valid variable
+        {'var', _, '_'} -> false;
+
+        % got another path element, calling recursively:
+        {record_field,_LINE1,_E1,_F1} -> is_valid_dict_path(E);
+
+        % everything else should be OK
+        _ -> true
+    end.
+
+
 %
 % common function for traversing expressions, patterns and guard elements
 %
 
 % this node was returned by the customized Erlang parser
-expr({record,LINE,'',L}, S) when ?is_context(body) ->
+expr({record,LINE,'',L}, S) -> %when ?is_context(body) ->
     % convert #{...} to erlson:store(Key, Value, erlson:store(..., []))
     make_dict_new(LINE, ?field_list(L));
 
 % this node was returned by the customized Erlang parser
-expr({record,_LINE,E,'',L}, S) when ?is_context(body) ->
+expr({record,_LINE,E,'',L}, S) -> %when ?is_context(body) ->
     % convert D#{...} to erlson:store(Key, Value, erlson:store(..., D))
     make_dict_store(_InitDict = ?expr(E), ?field_list(L));
 
 % this node was returned by the customized Erlang parser
-expr({record_field,LINE,E,'',F}, S) when ?is_context(body) ->
-    % convert #X.foo to erlson:fetch(foo, X)
+expr({record_field,LINE,E,'',F}, S) -> %when ?is_context(body) ->
+    % convert X.foo to erlson:fetch(foo, X)
     make_dict_fetch(LINE, F, ?expr(E));
 
-% NOTE: reusing Mensia field access syntax for accessing dict members
+% NOTE: reusing Mensia (qlc) field access syntax for accessing dict members
 % Original use: If E is E_0.Field, a Mnesia record access inside a query.
-expr({record_field,LINE,E,F}, S) when ?is_context(body),
-             not (is_tuple(E) % prohibit using ".foo" without leading expression
-                  andalso element(1, E) == 'atom'
-                  andalso element(3, E) == '') ->
-    % convert X.foo to erlson:fetch(foo, X)
-    %?PRINT("record_field: ~p~n", [E]),
-    make_dict_fetch(LINE, F, ?expr(E));
+expr(X = {record_field,LINE,E,F}, S) %when ?is_context(body)
+    when not is_atom(E),
+         not (is_tuple(E) andalso element(1, E) == 'atom') ->
+    case is_valid_dict_path(X) of
+        true ->
+            % convert X.foo to erlson:fetch(foo, X)
+            %?PRINT("record_field: ~p~n", [E]),
+            make_dict_fetch(LINE, F, ?expr(E));
+        false ->
+            % NOTE: there's no need to interpret (recurse into) invalid dict
+            % paths because they can't contain nodes that might have other
+            % Erlson expression
+            X
+    end;
 
 %
 % end of special handling of 'dict' records
