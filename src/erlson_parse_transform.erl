@@ -171,10 +171,6 @@ expr({record,_LINE,E,'',L}, S) when ?is_context(body) ->
     % convert D#{...} to dict:store(Key, Value, dict:store(..., D))
     make_dict_store(_InitDict = ?expr(E), ?field_list(L));
 
-expr({record_index,LINE,'',_F}, S) when ?is_context(body) ->
-    Es = "field indexes can not be used with Erlson objects",
-    throw({error, Es, LINE});
-
 % NOTE: reusing Mensia field access syntax for accessing dict members
 % Original use: If E is E_0.Field, a Mnesia record access inside a query.
 expr({record_field,LINE,E,F}, S) when ?is_context(body),
