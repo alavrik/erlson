@@ -25,25 +25,44 @@
 -module(erlson).
 
 -export([init/0]).
+
+% public API
+-export([to_list/1, from_list/1]).
+
+% these functions are used by Erlson compiled code
 -export([fetch/2, store/3]).
 
 
 % dictionary represented as an ordered list of name-value pairs
 -type orddict() :: [ {name(), value()} ].
+
+% binary() names are allowed, but only atom() names are reacheable (see below)
 -type name() :: atom() | binary().
--type path() :: atom() | [ atom() ].
--type value() :: name().
+
+% any value can be stored in Erlson dictionary
+-type value() :: any().
+
+% a path to reachable (possibly nested) orddict() elements
+-type name_path() :: atom() | [ atom() ].
+
+
+% proplists of restricted format can be loaded into Erlson object
+% proplist() is a supertype of orddict() type
+-type proplist() :: [ proplist_elem() ].
+-type proplist_elem() :: atom() | {atom(), value()}.
 
 
 -spec fetch/2 :: (
-    Path :: path(),
+    Path :: name_path(),
     Dict :: orddict() ) -> value().
 
 fetch(Path, Dict) ->
     try
         case is_atom(Path) of
             true -> fetch_val(Path, Dict);
-            false -> fetch_path(Path, Dict)
+            false ->
+                % NOTE: this branch is not currently in use
+                fetch_path(Path, Dict)
         end
     catch
         'erlson_not_found' ->
@@ -69,7 +88,7 @@ not_found() ->
 
 
 -spec store/3 :: (
-    Path :: path(),
+    Path :: name_path(),
     Value :: any(),
     Dict :: orddict() ) -> orddict().
 
@@ -97,7 +116,47 @@ store_val(Name, Value, Dict) ->
     orddict:store(Name, Value, Dict).
 
 
-% Enable Erlson syntax in Erlang shell
+-spec to_list/1 :: (Dict :: orddict()) -> orddict().
+to_list(Dict) -> Dict.
+
+
+% @doc Convert an Erlson dictionary from a (possibly nested) proplist
+%
+% During conversion, each atom() property is converted to {atom(), true}
+% dictionary association.
+-spec from_list/1 :: (List :: proplist()) -> orddict().
+
+from_list(L) ->
+    try from_list_1(L)
+    catch
+        'erlson_bad_list' ->
+            erlang:error('erlson_bad_list', [L])
+    end.
+
+
+from_list_1(L) when is_list(L) ->
+    % inserting elements to the new orddict() one by one
+    lists:foldl(fun store_proplist_elem/2, _EmptyDict = [], L);
+from_list_1(_) ->
+    throw('erlson_bad_list').
+
+
+store_proplist_elem(X, Dict) when is_atom(X) ->
+    store_val(X, true, Dict);
+store_proplist_elem({N, V}, Dict) when is_atom(N) ->
+    Value =
+        % if property value is a valid property list, convert it to a nested
+        % dictionary
+        try from_list_1(V)
+        catch 'erlson_bad_list' -> V
+        end,
+    store_val(N, Value, Dict);
+
+store_proplist_elem(_X, _Dict) ->
+    throw('erlson_bad_list').
+
+
+% @doc Enable Erlson syntax in Erlang shell
 init() ->
     case code:get_object_code(erl_parse_shell) of
         {_, Code, File} ->
