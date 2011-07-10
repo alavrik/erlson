@@ -31,35 +31,69 @@
 % dictionary represented as an ordered list of name-value pairs
 -type orddict() :: [ {name(), value()} ].
 -type name() :: atom() | binary().
+-type path() :: atom() | [ atom() ].
 -type value() :: name().
 
 
 -spec fetch/2 :: (
-    Name :: atom(),
+    Path :: path(),
     Dict :: orddict() ) -> value().
 
-fetch(Name, Dict) ->
+fetch(Path, Dict) ->
     try
-        fetch_val(Name, Dict)
+        case is_atom(Path) of
+            true -> fetch_val(Path, Dict);
+            false -> fetch_path(Path, Dict)
+        end
     catch
         'erlson_not_found' ->
-            erlang:error('erlson_not_found', [Name, Dict])
+            erlang:error('erlson_not_found', [Path, Dict])
     end.
+
+
+fetch_path([H|T], Dict) ->
+    Val = fetch_val(H, Dict),
+    fetch_path(T, Val);
+fetch_path([], Val) -> Val.
 
 
 fetch_val(Name, [{N, _V} | T]) when Name > N ->
     fetch_val(Name, T);
 fetch_val(Name, [{N, V} | _T]) when Name =:= N -> V;
 fetch_val(_Name, _) ->
+    not_found().
+
+
+not_found() ->
     throw('erlson_not_found').
 
 
 -spec store/3 :: (
-    Name :: atom(),
+    Path :: path(),
     Value :: any(),
     Dict :: orddict() ) -> orddict().
 
-store(Name, Value, Dict) ->
+store(Name, Value, Dict) when is_atom(Name) ->
+    store_val(Name, Value, Dict);
+store(Path, Value, Dict) ->
+    try
+        store_path(Path, Value, Dict)
+    catch
+        'erlson_not_found' ->
+            erlang:error('erlson_not_found', [Path, Dict])
+    end.
+
+
+store_path([N], Value, Dict) ->
+    store_val(N, Value, Dict);
+store_path([H|T], Value, Dict) ->
+    InnerDict = fetch_val(H, Dict),
+    % replace the existing value with the new inner dictionary
+    NewInnerDict = store_path(T, Value, InnerDict),
+    store_val(H, NewInnerDict, Dict).
+
+
+store_val(Name, Value, Dict) ->
     orddict:store(Name, Value, Dict).
 
 

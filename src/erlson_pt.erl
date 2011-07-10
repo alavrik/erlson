@@ -149,8 +149,14 @@ make_dict_store(InitDict, L) ->
 
 make_dict_store_1(InitDict, []) -> InitDict;
 make_dict_store_1(InitDict, [H|T]) ->
-    {record_field,LINE,Key,Value} = H,
-    Args = [Key, Value, make_dict_store_1(InitDict, T)],
+    {record_field,LINE,Name,Value} = H,
+    NamePath =
+        case Name of
+            [X] -> X; % path contains a single atom, like in normal records
+            L -> % path contains several atoms separated by '.'
+                make_list(L)
+        end,
+    Args = [NamePath, Value, make_dict_store_1(InitDict, T)],
     Res = make_call(LINE, 'erlson', 'store', Args),
     %?PRINT("make_dict_store_1: ~p~n", [Res]),
     Res.
@@ -171,6 +177,15 @@ make_call(LINE, ModName, FunName, Args) ->
     Res = {call, LINE, {remote,LINE,Mod,Fun}, Args},
     %?PRINT("make_call: ~p~n", [Res]),
     Res.
+
+
+make_list(L) ->
+    make_list(L, 0).
+
+make_list([H|T], _LINE) ->
+    LINE = element(2, H),
+    {cons,LINE,H,make_list(T, LINE)};
+make_list([], LINE) -> {nil, LINE}.
 
 
 % firt two clauses: 'record_field' form a sequence of dot-separated atoms,

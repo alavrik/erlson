@@ -34,6 +34,7 @@ binary_comprehension
 tuple
 %struct
 record_expr record_tuple record_field record_fields
+dict_tuple dict_field dict_fields dict_field_path
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
 try_expr try_catch try_clause try_clauses query_expr
@@ -342,13 +343,13 @@ record_expr -> '#' atom '.' atom :
 	{record_index,?line('$1'),element(3, '$2'),'$4'}.
 record_expr -> '#' atom record_tuple :
 	{record,?line('$1'),element(3, '$2'),'$3'}.
-record_expr -> '#' record_tuple :
+record_expr -> '#' dict_tuple :
 	{record,?line('$1'),'','$2'}.
 record_expr -> expr_max '#' atom '.' atom :
 	{record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
 record_expr -> expr_max '#' atom record_tuple :
 	{record,?line('$2'),'$1',element(3, '$3'),'$4'}.
-record_expr -> expr_max '#' record_tuple :
+record_expr -> expr_max '#' dict_tuple :
 	{record,?line('$2'),'$1','','$3'}.
 record_expr -> record_expr '#' atom '.' atom :
 	{record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
@@ -358,7 +359,7 @@ record_expr -> record_expr '.' atom :
 record_expr -> record_expr '#' atom record_tuple :
 	{record,?line('$2'),'$1',element(3, '$3'),'$4'}.
 % XXX: is this useful? include anyway for completeness?
-record_expr -> record_expr '#' record_tuple :
+record_expr -> record_expr '#' dict_tuple :
 	{record,?line('$2'),'$1','','$3'}.
 
 record_tuple -> '{' '}' : [].
@@ -369,6 +370,20 @@ record_fields -> record_field ',' record_fields : ['$1' | '$3'].
 
 record_field -> var '=' expr : {record_field,?line('$1'),'$1','$3'}.
 record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
+
+dict_tuple -> '{' '}' : [].
+dict_tuple -> '{' dict_fields '}' : '$2'.
+
+dict_fields -> dict_field : ['$1'].
+dict_fields -> dict_field ',' dict_fields : ['$1' | '$3'].
+
+dict_field -> dict_field_path :
+	{record_field,?line(hd('$1')),'$1',{atom,?line(hd('$1')),true}}.
+dict_field -> dict_field_path '=' expr :
+	{record_field,?line(hd('$1')),'$1','$3'}.
+
+dict_field_path -> atom : ['$1'].
+dict_field_path -> atom '.' dict_field_path : ['$1' | '$3'].
 
 %% N.B. This is called from expr_700.
 

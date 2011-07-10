@@ -60,13 +60,32 @@ basic_test() ->
 
 
 extended_test() ->
-%    (t()).foo,
-%    F = fun () -> #{foo = 1} end,
-%    (F()).foo,
+    % setting a new dict with a field set to 'true'
+    D = #{foo},
+    true = D.foo,
+
+    D1 = D#{foo = false, bar = 10},
+    10 = D1.bar,
+    false = D1.foo,
+
+    % creating a nested dict
+    D2 = #{foo = #{}},
+
+    % now, setting a field in the nested dict
+    D3 = D2#{foo.bar = 1},
+    1 = D3.foo.bar,
+
+    % setting several fields in the nested dicts
+    D4 = #{
+        foo = #{},
+        foo.bar = 1,
+        foo.baz = #{},
+        foo.baz.fum % = true
+    },
+    1 = D4.foo.bar,
+    true = D4.foo.baz.fum,
+
     ok.
-
-
-%t() -> #{foo = 1}.
 
 
 grammar_test() ->

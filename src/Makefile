@@ -13,7 +13,7 @@ ERL_TEST_OBJECTS = $(ERL_TESTS:%.erl=$(EBIN_DIR)/%.beam)
 .PHONY: all test
 
 
-all: $(ERL_SOURCES) $(ERL_OBJECTS) expand test
+all: $(ERL_SOURCES) erl_parse_shell.yrl $(ERL_OBJECTS) expand test
 
 
 erlson_tests.erl: $(ERL_SOURCES)
@@ -22,6 +22,11 @@ erlson_tests.erl: $(ERL_SOURCES)
 	else \
 	    ln -s ../test/$@ $@; \
 	fi
+
+
+erl_parse_shell.yrl:
+	test -s $@ || ln -s ../shell/src/erl_parse.yrl $@
+
 
 $(ERL_OBJECTS) $(ERL_TEST_OBJECTS): %.beam: %.erl
 	$(ERLC) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
