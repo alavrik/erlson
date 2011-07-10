@@ -23,6 +23,8 @@
 % Erlson runtime library
 %
 -module(erlson).
+
+-export([init/0]).
 -export([fetch/2, store/3]).
 
 
@@ -59,4 +61,21 @@ fetch_val(_Name, _) ->
 
 store(Name, Value, Dict) ->
     orddict:store(Name, Value, Dict).
+
+
+% Enable Erlson syntax in Erlang shell
+init() ->
+    case code:get_object_code(erl_parse_shell) of
+        {_, Code, File} ->
+            code:unstick_dir(filename:dirname(File)),
+            case code:load_binary(erl_parse, File, Code) of
+                {module, _Name} -> ok;
+                {error, Reason} ->
+                    exit({erlson_error,
+                        {"failed to load erl_parse_shell.beam", Reason}})
+            end;
+        error ->
+            exit({erlson_error,
+                    "failed to load code from erl_parse_shell.beam"})
+    end.
 
