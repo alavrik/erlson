@@ -1,4 +1,4 @@
-ERL_SOURCES = erl_parse.erl erl_parse_shell.erl erlson_pt.erl erlson.erl
+ERL_SOURCES = erl_parse.erl erlson_pt.erl erlson.erl erlson_rebar_plugin.erl
 ERL_TESTS = erlson_tests.erl
 TEST = erlson_tests
 
@@ -17,9 +17,11 @@ all: $(ERL_SOURCES) $(ERL_OBJECTS) expand test
 
 
 erlson_tests.erl: $(ERL_SOURCES)
-	#cp ../test/$@ $@
-	touch $@
-
+	if [ -s $@ ]; then \
+	    touch $@; \
+	else \
+	    ln -s ../test/$@ $@; \
+	fi
 
 $(ERL_OBJECTS) $(ERL_TEST_OBJECTS): %.beam: %.erl
 	$(ERLC) $(ERLC_FLAGS) -o $(EBIN_DIR) $<
@@ -40,5 +42,8 @@ expand: erlson_tests.erl erlson_tests.P
 
 
 clean:
-	rm -f $(ERL_OBJECTS) erl_crash.dump erl_parse.erl erlson_tests.P # erlson_tests.erl 
+	rm -f $(ERL_OBJECTS) erl_crash.dump \
+	    erl_parse.erl \
+	    erl_parse_shell.* \
+	    erlson_tests.*
 

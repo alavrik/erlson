@@ -1,9 +1,9 @@
 ebin
+.eunit
 
 *.beam
 *.P
-src/erl_parse.erl
-src/erl_parse_shell.erl
+erl_parse.erl
 
 # vim:
 *.swp
