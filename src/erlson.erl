@@ -28,6 +28,10 @@
 
 % public API
 -export([to_list/1, from_list/1]).
+-export([to_json/1, from_json/1]).
+% these two functions are useful, if there's a need to call mochijson2:decode
+% and mochijson2:encode separately
+-export([to_json_term/1, from_json_term/1]).
 
 % these functions are used by Erlson compiled code
 -export([fetch/2, store/3]).
@@ -116,11 +120,12 @@ store_val(Name, Value, Dict) ->
     orddict:store(Name, Value, Dict).
 
 
+% @doc Convert Erlson dictionary to a proplist
 -spec to_list/1 :: (Dict :: orddict()) -> orddict().
 to_list(Dict) -> Dict.
 
 
-% @doc Convert an Erlson dictionary from a (possibly nested) proplist
+% @doc Create Erlson dictionary from a (possibly nested) proplist
 %
 % During conversion, each atom() property is converted to {atom(), true}
 % dictionary association.
@@ -136,6 +141,7 @@ from_list(L) ->
 
 from_list_1(L) when is_list(L) ->
     % inserting elements to the new orddict() one by one
+    % XXX: use merge sort instead of insertion sort?
     lists:foldl(fun store_proplist_elem/2, _EmptyDict = [], L);
 from_list_1(_) ->
     throw('erlson_bad_list').
@@ -154,6 +160,108 @@ store_proplist_elem({N, V}, Dict) when is_atom(N) ->
 
 store_proplist_elem(_X, _Dict) ->
     throw('erlson_bad_list').
+
+
+% @doc Convert Erlson dictionary to a JSON Object
+-spec to_json/1 :: (Dict :: orddict()) -> iolist().
+to_json(Dict) ->
+    JsonStruct = to_json_term(Dict),
+    mochijson2:encode(JsonStruct).
+
+
+% @doc Convert Erlson dictionary to JSON abstract term representation
+%
+% The JSON term representation can be converted to JSON iolist() by calling
+% mochijson2:encode/1
+to_json_term(Dict) ->
+    try to_json_struct(Dict)
+    catch
+        'erlson_bad_json' ->
+            erlang:error('erlson_bad_json', [Dict])
+    end.
+
+
+to_json_struct(Dict) when is_list(Dict) ->
+    Fields = lists:map(fun to_json_field/1, Dict),
+    {'struct', Fields};
+to_json_struct(_) ->
+    throw('erlson_bad_json').
+
+
+to_json_field({N, V}) when is_atom(N); is_binary(N) ->
+    {N, encode_json_term(V)};
+to_json_field(_) ->
+    throw('erlson_bad_json').
+
+
+encode_json_term('undefined') -> 'null';
+encode_json_term(X) when
+        is_binary(X); is_atom(X); % JSON string
+        is_integer(X); is_float(X); % JSON number
+        is_boolean(X) -> % JSON true | false
+    X;
+encode_json_term(L) when is_list(L) ->
+    % try to treat list as a nested dictionary
+    try to_json_struct(L)
+    catch 'erlson_bad_json' ->
+        % otherwise, encode as JSON array
+        [ encode_json_term(X) || X <- L ]
+    end;
+encode_json_term(_) ->
+    throw('erlson_bad_json').
+
+
+% @doc Create Erlson dictionary from JSON Object
+-spec from_json/1 :: (Json :: iolist()) -> orddict().
+from_json(Json) ->
+    JsonTerm = mochijson2:decode(Json),
+    from_json_term(JsonTerm).
+
+
+% @doc Create Erlson dictionary from JSON abstract term representation
+%
+% The JSON term representation can be obtained from JSON iolist() by calling
+% mochijson2:decode/1
+from_json_term(JsonTerm = {'struct', _Fields}) ->
+    decode_json_term(JsonTerm);
+from_json_term(JsonTerm) ->
+    erlang:error('erlson_json_struct_expected', [JsonTerm]).
+
+
+decode_json_term(X) when
+        is_binary(X); % JSON string
+        is_integer(X); is_float(X); % JSON number
+        is_boolean(X) -> % JSON true | false
+    X;
+decode_json_term({'struct', Fields}) -> % JSON object
+    from_json_fields(Fields);
+decode_json_term(L) when is_list(L) -> % JSON array
+    [ decode_json_term(X) || X <- L ];
+decode_json_term('null') ->
+    % decoding JSON null as a more conventional 'undefined'
+    'undefined'.
+
+
+from_json_fields(L) ->
+    % inserting elements to the new orddict() one by one
+    % XXX: use merge sort instead of insertion sort?
+    lists:foldl(fun store_json_field/2, _EmptyDict = [], L).
+
+
+store_json_field({N, V}, Dict) ->
+    Name = decode_json_field_name(N),
+    Value = decode_json_term(V),
+    store_val(Name, Value, Dict).
+
+
+% the way Erlson treats field names is important. Each field can be represented
+% as either atom() or binary(), and because Erlson dict is ordered, all binary()
+% fields will be stored closer to the tail of the list
+decode_json_field_name(N) ->
+    try binary_to_existing_atom(N, utf8)
+    catch
+        error:badarg -> N
+    end.
 
 
 % @doc Enable Erlson syntax in Erlang shell
