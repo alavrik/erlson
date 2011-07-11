@@ -33,7 +33,7 @@ Examples:
 
     % creating Erlson dictionary from JSON iolist()
     D = erlson:from_json(Json).
-'''
+```
 
 General properties
 ------------------
