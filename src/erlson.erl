@@ -200,6 +200,7 @@ encode_json_term(X) when
         is_integer(X); is_float(X); % JSON number
         is_boolean(X) -> % JSON true | false
     X;
+encode_json_term([]) -> [];
 encode_json_term(L) when is_list(L) ->
     % try to treat list as a nested dictionary
     try to_json_struct(L)
