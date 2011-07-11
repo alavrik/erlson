@@ -7,6 +7,7 @@ Erlson dictionaries come with a convenient syntax and can be directly converted
 to and from JSON.
 
 Examples:
+
 ```erlang
     % creating an empty dictionary
     X = #{},
