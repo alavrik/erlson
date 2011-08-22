@@ -9,30 +9,30 @@ to and from JSON.
 Examples:
 
 ```erlang
-    % creating an empty dictionary
+    % create an empty dictionary
     X = #{},
 
-    % associating field 'foo' with 1 and 'bar' with "abc"
+    % associate field 'foo' with 1 and 'bar' with "abc"
     D = #{foo = 1, bar = "abc"},
 
-    % accessing dictionary element
+    % access dictionary element
     1 = D.foo,
 
-    % adding nested dictionaries to dictionary D
+    % add nested dictionaries to dictionary D
     D1 = D#{baz = #{fum = #{i = 0}}},
 
-    % accessing elements of the nested dictionary
+    % access elements of the nested dictionary
     0 = D1.baz.fum.i,
 
-    % modifying elements of the nested dictionary
+    % modify elements of the nested dictionary
     D2 = D1#{baz.fum.i = 100, baz.fum.j = "new nested value"}.
 
     ...
 
-    % converting Erlson dictionary to JSON iolist()
+    % convert Erlson dictionary to JSON iolist()
     erlson:to_json(D2).
 
-    % creating Erlson dictionary from JSON iolist()
+    % create Erlson dictionary from JSON iolist()
     D = erlson:from_json(Json).
 ```
 
@@ -63,10 +63,11 @@ tuples ordered by Name. This way, each Erlson dictionary is a valid `proplist`
 and `orddict` in terms of the correspondent stdlib modules.
 
 * Erlson dictionaries (dictionary syntax) can't be used as patterns and in
-guard expressions.
+guard expressions. An error message will be returned by the Erlang compiler
+Erlson syntax is used in pattern-matching or guard contexts.
 
-* Erlson dicts can be used in both compiled modules and Erlang interactive
-shell.
+* Erlson dictionaries can be used in both compiled modules and Erlang
+interactive shell.
 
 
 Properties related to JSON
@@ -79,7 +80,7 @@ dictionary.
 model.
 
 * JSON->Erlson->JSON conversion produces an equivalent JSON object
-(fields will be reordered).
+(fields may be reordered).
 
 
 Usage instructions
@@ -104,6 +105,14 @@ include it in `.erlang` file):
     erlson:init().
 
 
+Limitations
+-----------
+
+Erlson relies on a modified version of Erlang parser from Erlang/OTP R14B03.
+Therefore, Erlson may or may not work with other Erlang releases depending on
+the set of syntax features used by the program.
+
+
 Dependencies
 ------------
 
@@ -117,3 +126,20 @@ add it as dependency in your `rebar.config`. For example:
             % we need Mochiweb for mochijson2
             {mochiweb, "", {git, "https://github.com/mochi/mochiweb.git", {branch, "master"}}}
         ]}.
+
+
+Authors
+-------
+
+Erlson is created by Anton Lavrik <alavrik@piqi.org>.
+
+The first version was written as a [Spawnfest](http://spawnfest.com) submission
+which took the The Erlang Enhancement Prize.
+
+
+License
+-------
+
+Erlson is distributed under the terms of a MIT license. See the LICENSE file for
+details.
+
