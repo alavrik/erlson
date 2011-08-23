@@ -27,7 +27,7 @@
 -export([init/0]).
 
 % public API
--export([to_list/1, from_list/1]).
+-export([from_proplist/1, from_nested_proplist/1, from_nested_proplist/2]).
 -export([to_json/1, from_json/1]).
 % these two functions are useful, if there's a need to call mochijson2:decode
 % and mochijson2:encode separately
@@ -120,46 +120,90 @@ store_val(Name, Value, Dict) ->
     orddict:store(Name, Value, Dict).
 
 
-% @doc Convert Erlson dictionary to a proplist
--spec to_list/1 :: (Dict :: orddict()) -> orddict().
-to_list(Dict) -> Dict.
-
-
-% @doc Create Erlson dictionary from a (possibly nested) proplist
+% @doc Create Erlson dictionary from a proplist
 %
 % During conversion, each atom() property is converted to {atom(), true}
 % dictionary association.
--spec from_list/1 :: (List :: proplist()) -> orddict().
+-spec from_proplist/1 :: (List :: proplist()) -> orddict().
 
-from_list(L) ->
-    try from_list_1(L)
+from_proplist(L) ->
+    from_nested_proplist(L, _MaxDepth = 1).
+
+
+% @doc Create nested Erlson dictionary from a (possibly nested) proplist
+%
+% During conversion, each atom() property is converted to {atom(), true}
+% dictionary association.
+-spec from_nested_proplist/1 :: (List :: proplist()) -> orddict().
+
+from_nested_proplist(L) ->
+    from_nested_proplist(L, _MaxDepth = 'undefined').
+
+
+% @doc Create nested Erlson dictionary from a (possibly nested) proplist
+%
+% Valid nested proplists up to maximum depth of `MaxDepth` will be converted to
+% Erlson dictionaries.
+%
+% `MaxDepth = 'undefined'` means no limit on the depth of nesting.
+%
+%
+% ```
+% from_nested_proplist(L) ->
+%     from_nested_proplist(L, _MaxDepth = 'undefined').
+%
+% from_proplist(L) ->
+%     from_nested_proplist(L, _MaxDepth = 1).
+% '''
+-spec from_nested_proplist/2 :: (
+    List :: proplist(),
+    MaxDepth :: 'undefined' | pos_integer()) -> orddict().
+
+from_nested_proplist(L, MaxDepth) ->
+    try from_proplist_1(L, init_max_depth(MaxDepth))
     catch
-        'erlson_bad_list' ->
-            erlang:error('erlson_bad_list', [L])
+        'erlson_bad_proplist' ->
+            erlang:error('erlson_bad_proplist', [L])
     end.
 
 
-from_list_1(L) when is_list(L) ->
+init_max_depth('undefined') -> % no limit on the depth of nesting
+    % by starting from 0 we'll never hit depth 0 when decrementing MaxDepth in
+    % from_proplist_1
+    0;
+init_max_depth(X) -> X. % positive integer
+
+
+from_proplist_1(L, MaxDepth) when is_list(L) ->
     % inserting elements to the new orddict() one by one
     % XXX: use merge sort instead of insertion sort?
-    lists:foldl(fun store_proplist_elem/2, _EmptyDict = [], L);
-from_list_1(_) ->
-    throw('erlson_bad_list').
+    lists:foldl(
+        fun (X, Dict) -> store_proplist_elem(X, Dict, MaxDepth - 1) end,
+        _EmptyDict = [],
+        L
+    );
+from_proplist_1(_, _) ->
+    throw('erlson_bad_proplist').
 
 
-store_proplist_elem(X, Dict) when is_atom(X) ->
-    store_val(X, true, Dict);
-store_proplist_elem({N, V}, Dict) when is_atom(N) ->
+store_proplist_elem({N, V}, Dict, MaxDepth) when is_atom(N) ->
     Value =
-        % if property value is a valid property list, convert it to a nested
-        % dictionary
-        try from_list_1(V)
-        catch 'erlson_bad_list' -> V
+        case MaxDepth of
+            0 -> V; % we've riched the maximum nesting depth
+            _ ->
+                % if property value is a valid property list, convert it to a
+                % nested dictionary
+                try from_proplist_1(V, MaxDepth)
+                catch 'erlson_bad_proplist' -> V
+                end
         end,
     store_val(N, Value, Dict);
 
-store_proplist_elem(_X, _Dict) ->
-    throw('erlson_bad_list').
+store_proplist_elem(X, Dict, _MaxDepth) when is_atom(X) ->
+    store_val(X, true, Dict);
+
+store_proplist_elem(_X, _Dict, _MaxDepth) ->
+    throw('erlson_bad_proplist').
 
 
 % @doc Convert Erlson dictionary to a JSON Object

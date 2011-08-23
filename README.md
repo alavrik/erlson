@@ -12,8 +12,8 @@ Examples:
     % create an empty dictionary
     X = #{},
 
-    % associate field 'foo' with 1 and 'bar' with "abc"
-    D = #{foo = 1, bar = "abc"},
+    % associate fields 'foo' with 1, 'bar' with "abc" and 'fum' with 'true'
+    D = #{foo = 1, bar = "abc", fum},
 
     % access dictionary element
     1 = D.foo,
@@ -34,6 +34,18 @@ Examples:
 
     % create Erlson dictionary from JSON iolist()
     D = erlson:from_json(Json).
+
+    ...
+
+    % create Erlson dictionary from a proplist
+    D = erlson:from_proplist(L).
+
+    % create nested Erlson dictionary from a nested proplist
+    D = erlson:from_nested_proplist(L).
+
+    % create nested Erlson dictionary from a nested proplist up to the maximum
+    % depth of 2
+    D = erlson:from_nested_proplist(L, 2).
 ```
 
 General properties
@@ -81,6 +93,55 @@ model.
 
 * JSON->Erlson->JSON conversion produces an equivalent JSON object
 (fields may be reordered).
+
+* There is one-to-one mapping between JSON and Erlang/Erlson values:
+
+   * JSON object <-> Erlson dictionary
+   * JSON array  <-> Erlang list
+   * JSON number <-> Erlang `number()` (i.e. floats and integers)
+   * JSON true | false <-> Erlang `boolean()`
+   * JSON string value <-> Erlang `binary()`
+   * JSON null <-> Erlang atom `undefined`
+
+* JSON field names are decoded using the following function:
+
+    ```erlang
+    decode_json_field_name(N) ->
+        try binary_to_existing_atom(N, utf8)
+        catch
+            error:badarg -> N
+        end.
+    ```
+
+
+Erlson and property lists
+-------------------------
+
+Property list can be converted to Erlson dictionaries using the
+`erlson:from_proplist` function and its variations.
+
+Erlson dictionaries can also be used for property lists construction. Using
+Erlson, proplists look much cleaner. For example, compare
+
+```erlang
+{application, erlson,
+ [{description, "Erlang Simple Object Notation"},
+  {vsn, git},
+  {modules, []},
+  {applications, [kernel, stdlib]},
+  {env, []}]}.
+```
+
+and
+
+```erlang
+{application, erlson,
+ #{description = "Erlang Simple Object Notation",
+   vsn = git,
+   modules = [],
+   applications = [kernel, stdlib],
+   env = []}}.
+```
 
 
 Usage instructions

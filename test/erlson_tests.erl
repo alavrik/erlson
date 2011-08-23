@@ -186,3 +186,45 @@ json_null() ->
     ?assert(erlson:from_json(J) =:= D),
     ok.
 
+
+proplist_test() ->
+    ?assertEqual(#{}, erlson:from_proplist([])),
+    ?assertEqual(#{}, erlson:from_nested_proplist([])),
+
+    ?assertEqual(#{foo}, erlson:from_proplist([foo])),
+    ?assertEqual(#{foo}, erlson:from_nested_proplist([foo])),
+
+    ?assertEqual(#{foo}, erlson:from_proplist([{foo, true}])),
+    ?assertEqual(#{foo}, erlson:from_nested_proplist([{foo, true}])),
+
+    L =
+         [{description, "Erlang Simple Object Notation"},
+          {vsn, git},
+          {modules, []},
+          {applications, [kernel, stdlib]},
+          {env, []}],
+    D =
+         #{description = "Erlang Simple Object Notation",
+           vsn = git,
+           modules = [],
+           applications = [kernel, stdlib],
+           env = []},
+
+    NestedD =
+         #{description = "Erlang Simple Object Notation",
+           vsn = git,
+           modules = [],
+           applications = #{kernel, stdlib},
+           env = []},
+
+    ?assertEqual(D, erlson:from_proplist(L)),
+    ?assertEqual(D, erlson:from_nested_proplist(L,1)),
+
+    ?assertEqual(NestedD, erlson:from_nested_proplist(L)),
+    ?assertEqual(NestedD, erlson:from_nested_proplist(L, 'undefined')),
+
+    ?assertEqual(NestedD, erlson:from_nested_proplist(L,2)),
+    ?assertEqual(NestedD, erlson:from_nested_proplist(L,10)),
+
+    ok.
+
