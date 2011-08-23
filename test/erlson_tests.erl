@@ -107,3 +107,82 @@ dict_grammar2() -> #{x = 1}.x. foo2() -> ok.
 
 dict_grammar3() -> D = #{x = 1}, D.x. foo3() -> ok.
 
+
+json_test() ->
+    case code:which(mochijson2) of
+        'non_existing' ->
+            ?debugMsg(
+                "can't test erlson:to/from_json, because mochijson2 module is not found"
+            );
+        _ ->
+            json1(),
+            json_empty(),
+            json_empty_list(),
+            json_null(),
+            ok
+    end.
+
+
+json1() ->
+    Json =
+    "  {
+          \"Image\": {
+              \"Width\":  800,
+              \"Height\": 600,
+              \"Title\":  \"View from 15th Floor\",
+              \"Thumbnail\": {
+                  \"Url\":    \"http://www.example.com/image/481989943\",
+                  \"Height\": 125,
+                  \"Width\":  \"100\"
+              },
+              \"IDs\": [116, 943, 234, 38793]
+            },
+          \"address\": {
+             \"precision\": \"zip\",
+             \"Latitude\":  37.7668,
+             \"Longitude\": -122.3959,
+             \"Address\":   \"\",
+             \"City\":      \"SAN FRANCISCO\",
+             \"State\":     \"CA\",
+             \"Zip\":       \"94107\",
+             \"Country\":   \"US\"
+          }
+       }
+    ",
+    D = erlson:from_json(Json),
+
+    800 = D.'Image'.'Width',
+    125 = D.'Image'.'Thumbnail'.'Height',
+    <<"100">> = D.'Image'.'Thumbnail'.'Width',
+    [116, 943, 234, 38793] = D.'Image'.'IDs',
+
+    _ = D.address,
+    <<"CA">> = D.address.'State',
+    true = is_float(D.address.'Latitude'),
+
+    ok.
+
+
+json_empty() ->
+    D = #{},
+    J = <<"{}">> = iolist_to_binary(erlson:to_json(D)),
+
+    ?assert(erlson:from_json(J) =:= D),
+    ok.
+
+
+json_empty_list() ->
+    D = #{foo = []},
+    J = <<"{\"foo\":[]}">> = iolist_to_binary(erlson:to_json(D)),
+
+    ?assert(erlson:from_json(J) =:= D),
+    ok.
+
+
+json_null() ->
+    D = #{foo = 'undefined'},
+    J = <<"{\"foo\":null}">> = iolist_to_binary(erlson:to_json(D)),
+
+    ?assert(erlson:from_json(J) =:= D),
+    ok.
+
