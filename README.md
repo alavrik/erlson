@@ -150,20 +150,30 @@ Usage instructions
 For compiled modules that use Erlson syntax, the Erlson library header must be
 included:
 
+```erlang
     -include_lib("erlson/include/erlson.hrl").
-
+```
 
 When rebar is used as a build tool, it should be configured to use
-"erlson_rebar_plugin". In order to do that, add the following line to the
+"erlson_rebar_plugin". In order to do that, add the following lines to the
 project's "rebar.config" file:
 
-    {rebar_plugins, [erlson_rebar_plugin]}.
+```erlang
+    {plugins, [erlson_rebar_plugin]}. % for newer rebar
+    {rebar_plugins, [erlson_rebar_plugin]}. % for older rebar
 
+    {deps,
+        [
+            {erlson, "", {git, "https://github.com/alavrik/erlson.git", {branch, "master"}}}
+        ]}.
+```
 
 In order to use Erlson syntax from Erlang shell, run the following command (e.g.
 include it in `.erlang` file):
-    
+
+```erlang
     erlson:init().
+```
 
 
 Limitations
@@ -182,12 +192,13 @@ as a part of [Mochiweb](https://github.com/mochi/mochiweb). Erlson doesn't
 automatically include it, but if you wish to do it with a rebar-enabled project,
 add it as dependency in your `rebar.config`. For example:
 
+```erlang
     {deps,
         [
             % we need Mochiweb for mochijson2
             {mochiweb, "", {git, "https://github.com/mochi/mochiweb.git", {branch, "master"}}}
         ]}.
-
+```
 
 Authors
 -------
