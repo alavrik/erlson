@@ -13,7 +13,7 @@ ERL_TEST_OBJECTS = $(ERL_TESTS:%.erl=$(EBIN_DIR)/%.beam)
 .PHONY: all test
 
 
-all: $(ERL_SOURCES) erl_parse_shell.yrl $(ERL_OBJECTS) expand test
+all: $(ERL_SOURCES) erl_parse_shell.yrl erl_parse.yrl $(ERL_OBJECTS) expand test
 
 
 erlson_tests.erl: $(ERL_SOURCES)
@@ -25,7 +25,11 @@ erlson_tests.erl: $(ERL_SOURCES)
 
 
 erl_parse_shell.yrl:
-	test -s $@ || ln -s ../shell/src/erl_parse.yrl $@
+	test -s $@ || ln -s ../erlson_shell/src/erl_parse.yrl $@
+
+
+erl_parse.yrl:
+	test -s $@ || ln -s ../erlson_erlc/src/erl_parse.yrl $@
 
 
 $(ERL_OBJECTS) $(ERL_TEST_OBJECTS): %.beam: %.erl
@@ -48,7 +52,7 @@ expand: erlson_tests.erl erlson_tests.P
 
 clean:
 	rm -f $(ERL_OBJECTS) erl_crash.dump \
-	    erl_parse.erl \
+	    erl_parse.erl erl_parse.yrl \
 	    erl_parse_shell.* \
 	    erlson_tests.*
 

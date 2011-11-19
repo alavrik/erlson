@@ -24,7 +24,7 @@
 %
 -module(erlson).
 
--export([init/0]).
+-export([init/0, init_erlc/0]).
 
 % public API
 -export([from_proplist/1, from_nested_proplist/1, from_nested_proplist/2]).
@@ -311,17 +311,32 @@ decode_json_field_name(N) ->
 
 % @doc Enable Erlson syntax in Erlang shell
 init() ->
-    case code:get_object_code(erl_parse_shell) of
+    init(erl_parse_shell).
+
+
+% @doc Enable Erlson syntax when compiling Erlang modules using erlc. The
+% resulting Erlang AST will be proccessed by Erlson pase transform module
+% (erlson_pt.erl).
+init_erlc() ->
+    init(erl_parse_erlc).
+
+
+init(Mod) ->
+    % unload stdlib's erl_parse
+    code:purge(erl_parse),
+    code:delete(erl_parse),
+
+    case code:get_object_code(Mod) of
         {_, Code, File} ->
             code:unstick_dir(filename:dirname(File)),
             case code:load_binary(erl_parse, File, Code) of
                 {module, _Name} -> ok;
                 {error, Reason} ->
                     exit({erlson_error,
-                        {"failed to load erl_parse_shell.beam", Reason}})
+                        {"failed to load module " ++ atom_to_list(Mod), Reason}})
             end;
         error ->
             exit({erlson_error,
-                    "failed to load code from erl_parse_shell.beam"})
+                    "failed to load code from module " ++ atom_to_list(Mod)})
     end.
 

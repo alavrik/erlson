@@ -27,21 +27,9 @@ pre_xref(Config, X) ->
 
 
 common(_Config, _X) ->
-    ErlParsePath = code:which(erl_parse),
-    case {string:str(ErlParsePath, "erlson"), string:str(ErlParsePath, "stdlib")} of
-        {N, 0} when N =/= 0 ->
-            % Erlson version of the Erlang parser is already loaded
-            ok;
-        {0, N} when N =/= 0 ->
-            % for loading the custom "erl_parse" module, we rely on the fact
-            % that it is located next to this rebar plugin
-            code:purge(erl_parse),
-            code:delete(erl_parse),
-            code:load_file(erl_parse),
-            rebar_log:log(debug,
-                "erlson_rebar_plugin: repointed erl_parse to: ~s~n",
-                [code:which(erl_parse)]),
-            true = (string:str(code:which(erl_parse), "erlson") =/= 0),
-            ok
-    end.
+    erlson:init_erlc(),
+    rebar_log:log(debug,
+        "erlson_rebar_plugin: loaded erl_parse as ~s~n",
+        [code:which(erl_parse)]),
+    ok.
 
