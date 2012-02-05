@@ -10,6 +10,9 @@ ERLC_FLAGS = -pa $(EBIN_DIR)
 ERL_OBJECTS = $(ERL_SOURCES:%.erl=$(EBIN_DIR)/%.beam)
 ERL_TEST_OBJECTS = $(ERL_TESTS:%.erl=$(EBIN_DIR)/%.beam)
 
+OTP_RELEASE := $(shell ../otp_release.sh)
+
+
 .PHONY: all test
 
 
@@ -25,11 +28,11 @@ erlson_tests.erl: $(ERL_SOURCES)
 
 
 erl_parse_shell.yrl:
-	test -s $@ || ln -s ../erlson_shell/src/erl_parse.yrl $@
+	test -s $@ || ln -s ../$(OTP_RELEASE)/erl_parse_shell.yrl $@
 
 
 erl_parse.yrl:
-	test -s $@ || ln -s ../erlson_erlc/src/erl_parse.yrl $@
+	test -s $@ || ln -s ../$(OTP_RELEASE)/erl_parse_erlc.yrl $@
 
 
 $(ERL_OBJECTS) $(ERL_TEST_OBJECTS): %.beam: %.erl

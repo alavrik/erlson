@@ -1,6 +1,9 @@
 ebin
 .eunit
 
+erlson_erlc/src/erl_parse.yrl
+erlson_shell/src/erl_parse.yrl
+
 *.beam
 *.P
 erl_parse.erl
