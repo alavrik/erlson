@@ -1,6 +1,6 @@
 #!/bin/sh
 
-OTP_VERSION=`erl -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'`
+OTP_VERSION=`erl -noshell -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().'`
 
 case "$OTP_VERSION" in
         R13*)
