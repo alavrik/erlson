@@ -326,6 +326,7 @@ init(Mod) ->
     code:purge(erl_parse),
     code:delete(erl_parse),
 
+    code:add_path(code:lib_dir(erlson, priv)),
     case code:get_object_code(Mod) of
         {_, Code, File} ->
             code:unstick_dir(filename:dirname(File)),
