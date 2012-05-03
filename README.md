@@ -179,9 +179,19 @@ include it in `.erlang` file):
 Limitations
 -----------
 
-Erlson relies on a modified version of Erlang parser from Erlang/OTP R14B03.
-Therefore, Erlson may or may not work with other Erlang releases depending on
-the set of syntax features used by the program.
+Erlson relies on modified versions of Erlang parsers taken from correspondent
+Erlang/OTP releases. While Erlson is fully compatible with R13, R14 and R15
+Erlang releases, compatibility between Erlson and future Erlang versions can not
+be guaranteed.
+
+Compatibility can break in one of the following ways:
+
+* Erlang adopts Erlson syntax for natively implemented dynamic dictionaries
+  which will make Erlson obsolete.
+
+* Erlang introduces new unrelated syntax elements conflicting with Erlson
+  grammar which will make Erlson completely unusable in its current form. In
+  response to that, Erlson may adjust its grammar to remain compatible.
 
 
 Dependencies
