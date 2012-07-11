@@ -29,6 +29,7 @@
 % public API
 -export([from_proplist/1, from_nested_proplist/1, from_nested_proplist/2]).
 -export([to_json/1, from_json/1]).
+-export([list_to_json_array/1, list_from_json_array/1]).
 % these two functions are useful, if there's a need to call mochijson2:decode
 % and mochijson2:encode separately
 -export([to_json_term/1, from_json_term/1]).
@@ -225,6 +226,23 @@ to_json_term(Dict) ->
     end.
 
 
+% @doc Convert a list of Erlson dictionaries to a JSON array
+-spec list_to_json_array/1 :: (List :: [orddict()]) -> iolist().
+list_to_json_array(List) ->
+    JsonStruct = list_to_json_term(List),
+    mochijson2:encode(JsonStruct).
+
+
+% @doc Convert list of Erlson dictionaries to list of JSON abstract terms
+list_to_json_term(List) ->
+    try [encode_json_term(X) || X <- List]
+    catch
+        'erlson_bad_json' ->
+            erlang:error('erlson_bad_json', [List])
+    end.
+
+
+
 to_json_struct(Dict) when is_list(Dict) ->
     Fields = lists:map(fun to_json_field/1, Dict),
     {'struct', Fields};
@@ -271,6 +289,20 @@ from_json_term(JsonTerm = {'struct', _Fields}) ->
     decode_json_term(JsonTerm);
 from_json_term(JsonTerm) ->
     erlang:error('erlson_json_struct_expected', [JsonTerm]).
+
+
+% @doc Create list of Erlson dictionaries from JSON array
+-spec list_from_json_array/1 :: (Json :: iolist()) -> [orddict()].
+list_from_json_array(Json) ->%, list_to_json_array, list_from_json_term and list_to_json_term
+    JsonTerm = mochijson2:decode(Json),
+    list_from_json_term(JsonTerm).
+
+
+% @doc Create list of Erlson dictionaries from list of JSON abstract terms
+list_from_json_term(JsonTerm) when is_list(JsonTerm) ->
+    decode_json_term(JsonTerm);
+list_from_json_term(JsonTerm) ->
+    erlang:error('erlson_json_array_expected', [JsonTerm]).
 
 
 decode_json_term(X) when
