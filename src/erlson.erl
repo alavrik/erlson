@@ -37,6 +37,9 @@
 % these functions are used by Erlson compiled code
 -export([fetch/2, store/3]).
 
+-export([get_value/2]).
+-export([get_value/3]).
+
 
 % dictionary represented as an ordered list of name-value pairs
 -type orddict() :: [ {name(), value()} ].
@@ -72,6 +75,33 @@ fetch(Path, Dict) ->
     catch
         'erlson_not_found' ->
             erlang:error('erlson_not_found', [Path, Dict])
+    end.
+
+
+-spec get_value/2 :: (
+    Path :: name_path(),
+    Dict :: orddict() ) -> value().
+
+get_value(Path, Dict) ->
+    get_value(Path, Dict, undefined).
+
+
+-spec get_value/3 :: (
+    Path :: name_path(),
+    Dict :: orddict(),
+    Default :: any() ) -> value().
+
+get_value(Path, Dict, Default) ->
+    try
+        case is_atom(Path) of
+            true ->
+                fetch_val(Path, Dict);
+            false ->
+                fetch_path(Path, Dict)
+        end
+    catch
+        'erlson_not_found' ->
+            Default
     end.
 
 
