@@ -275,7 +275,7 @@ encode_json_term(_) ->
 
 
 % @doc Create Erlson dictionary from JSON Object
--spec from_json/1 :: (Json :: iolist()) -> orddict().
+-spec from_json/1 :: (Json :: iodata()) -> orddict().
 from_json(Json) ->
     JsonTerm = mochijson2:decode(Json),
     from_json_term(JsonTerm).
@@ -292,7 +292,7 @@ from_json_term(JsonTerm) ->
 
 
 % @doc Create list of Erlson dictionaries from JSON array
--spec list_from_json_array/1 :: (Json :: iolist()) -> [orddict()].
+-spec list_from_json_array/1 :: (Json :: iodata()) -> [orddict()].
 list_from_json_array(Json) ->%, list_to_json_array, list_from_json_term and list_to_json_term
     JsonTerm = mochijson2:decode(Json),
     list_from_json_term(JsonTerm).
