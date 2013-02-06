@@ -300,6 +300,9 @@ encode_json_term(L) when is_list(L) ->
         % otherwise, encode as JSON array
         [ encode_json_term(X) || X <- L ]
     end;
+encode_json_term({'json', X} = Json) when is_binary(X); is_list(X) -> % iodata()
+    % quoted JSON -- this notation is directly supported by mochijson2
+    Json;
 encode_json_term(_) ->
     throw('erlson_bad_json').
 

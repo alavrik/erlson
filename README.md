@@ -92,7 +92,8 @@ dictionary.
 model.
 
 * JSON->Erlson->JSON conversion produces an equivalent JSON object
-(fields may be reordered).
+(fields may be reordered). The only exception is `{}` (empty JSON object),
+because it can not be directly represented in Erlson when loaded from JSON.
 
 * There is one-to-one mapping between JSON and Erlang/Erlson values:
 
@@ -112,6 +113,11 @@ model.
             error:badarg -> N
         end.
     ```
+
+* The `erlson:to_json` function supports quoted JSON values represented as
+  `{json, iodata()} Erlang terms. The function will write the `iodata()` part of
+  this term directly into JSON output. For example, `{json, "{}"}` Erlson value
+  will turn into empty JSON object.
 
 
 Erlson and property lists
