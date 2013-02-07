@@ -30,12 +30,6 @@ basic_test() ->
     % creating an empty dictionary
     _ = #{},
 
-    foo.bar,
-
-    foo.bar.baz,
-
-    .foo,
-
     % associating foo with 1
     D = #{foo = 1},
     1 = D.foo,

@@ -195,10 +195,12 @@ is_valid_dict_path({'atom', _, _}) -> false;
 
 % make sure we don't interfere with Mnesia/QLC by treating '_' as a valid
 % variable
+% NOTE: this syntax was deprecated in R16A or maybe even in earlier releases
 is_valid_dict_path({'var', _, '_'}) -> false;
 
 % got another path element, calling recursively:
-is_valid_dict_path({record_field,_LINE,E,_F}) -> is_valid_dict_path(E);
+is_valid_dict_path({record_field,_LINE,E,_F}) -> is_valid_dict_path(E); % only used pre- R16A
+is_valid_dict_path({record_field,_LINE,E,'',_F}) -> is_valid_dict_path(E);
 
 % everything else should be OK
 is_valid_dict_path(_) -> true.
@@ -223,12 +225,15 @@ expr({record_field,LINE,E,'',F}, S) -> %when ?is_context(body) ->
     % convert X.foo to erlson:fetch(foo, X)
     make_dict_fetch(LINE, F, ?expr(E));
 
+% NOTE: this brach is used only for Erlang releases < R16A; starting from Erlang
+% R16A, this AST element is no longer used. The above clause is used instead.
+%
 % NOTE: reusing Mensia (qlc) field access syntax for accessing dict members
 % Original use: If E is E_0.Field, a Mnesia record access inside a query.
 expr(X = {record_field,LINE,E,F}, S) %when ?is_context(body)
     when not is_atom(E),
          not (is_tuple(E) andalso element(1, E) == 'atom') ->
-    case is_valid_dict_path(X) of
+    case is_valid_dict_path(E) of
         true ->
             % convert X.foo to erlson:fetch(foo, X)
             %?PRINT("record_field: ~p~n", [E]),
