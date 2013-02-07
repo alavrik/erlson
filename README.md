@@ -115,9 +115,9 @@ because it can not be directly represented in Erlson when loaded from JSON.
     ```
 
 * The `erlson:to_json` function supports quoted JSON values represented as
-  `{json, iodata()} Erlang terms. The function will write the `iodata()` part of
-  this term directly into JSON output. For example, `{json, "{}"}` Erlson value
-  will turn into empty JSON object.
+  `{json, iodata()}` Erlang terms. The function will write the `iodata()` part
+  of this term directly into JSON output. For example, `{json, "{}"}` Erlson
+  value will turn into empty JSON object.
 
 
 Erlson and property lists
