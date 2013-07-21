@@ -48,63 +48,96 @@ Examples:
     D = erlson:from_nested_proplist(L, 2).
 ```
 
+
+Other API functions
+-------------------
+
+Parsing and generating top-level JSON arrays.
+
+    ErlsonList = erlson:list_from_json_array(<JSON array represented as iolist()>)
+
+    JsonArray = erlson:list_to_json_array(ErlsonList)
+
+
+Accessing fields dynamically (i.e. without using Erlson syntax). The main
+difference between Erlson field access syntax and `get_value/1` is that
+`get_value/1` returns `undefined` if the field is missing whereas Erlson will
+crash.
+
+    erlson:get_value(Path, Dict)  % alias for get_value(Path, 'undefined')
+
+    erlson:get_value(Path, Dict, Default)
+
+    % Path :: atom() | [atom()]
+
+
+Macros similar to `get_value/2,3` functions for gracefully handling missing
+fields but still using Erlson syntax for accessing them. Example:
+
+    -include_lib("erlson/include/erlson.hrl").
+
+    ...
+
+    ?erlson_default(X.foo.bar)
+
+    ?erlson_default(X.foo.bar, Default)
+
+
 General properties
 ------------------
 
-* Erlson dictionaries contain zero or more Name->Value associations
-(fields), where each Name is `atom()` or `binary()` and Value can be of `any()`
-type.
+- Erlson dictionaries contain zero or more Name->Value associations (fields),
+  where each Name is `atom()` or `binary()` and Value can be of `any()` type.
 
-* Name->Value associations are unique. If a new association is created for the
-existing Name, the old value will be replaced by the new value.
+- Name->Value associations are unique. If a new association is created for the
+  existing Name, the old value will be replaced by the new value.
 
-* Erlson dictionaries can be nested.
+- Erlson dictionaries can be nested.
+
 
 
 Runtime properties
 ------------------
 
-* Only fields with `atom()` names can be accessed using the Erlson
-dictionary syntax.
+- Only fields with `atom()` names can be accessed using the Erlson dictionary
+  syntax.
 
-* Unlike Erlang records, Erlson dictionaries can be dynamically constructed
-without any static type declarations.
+- Unlike Erlang records, Erlson dictionaries can be dynamically constructed
+  without any static type declarations.
 
-* At runtime, Erlson dictionaries are represented as a list of {Name, Value}
-tuples ordered by Name. This way, each Erlson dictionary is a valid `proplist`
-and `orddict` in terms of the correspondent stdlib modules.
+- At runtime, Erlson dictionaries are represented as a list of {Name, Value}
+  tuples ordered by Name. This way, each Erlson dictionary is a valid `proplist`
+  and `orddict` in terms of the correspondent stdlib modules.
 
-* Erlson dictionaries (dictionary syntax) can't be used as patterns and in
-guard expressions. An error message will be returned by the Erlang compiler
-Erlson syntax is used in pattern-matching or guard contexts.
+- Erlson dictionaries (dictionary syntax) can't be used as patterns and in guard
+  expressions. An error message will be returned by the Erlang compiler Erlson
+  syntax is used in pattern-matching or guard contexts.
 
-* Erlson dictionaries can be used in both compiled modules and Erlang
-interactive shell.
+- Erlson dictionaries can be used in both compiled modules and Erlang
+  interactive shell.
 
 
-Properties related to JSON
---------------------------
+Erlson and JSON
+---------------
 
-* Each valid JSON object can be converted to correspondent Erlson
-dictionary.
+- Each valid JSON object can be converted to correspondent Erlson dictionary.
 
-* An Erlson dictionary can be converted to JSON if it follows JSON data
-model.
+- An Erlson dictionary can be converted to JSON if it follows JSON data model.
 
-* JSON->Erlson->JSON conversion produces an equivalent JSON object
-(fields may be reordered). The only exception is `{}` (empty JSON object),
-because it can not be directly represented in Erlson when loaded from JSON.
+- JSON->Erlson->JSON conversion produces an equivalent JSON object (fields may
+  be reordered). The only exception is `{}` (empty JSON object), because it can
+  not be directly represented in Erlson when loaded from JSON.
 
-* There is one-to-one mapping between JSON and Erlang/Erlson values:
+- There is one-to-one mapping between JSON and Erlang/Erlson values:
 
-   * JSON object <-> Erlson dictionary
-   * JSON array  <-> Erlang list
-   * JSON number <-> Erlang `number()` (i.e. floats and integers)
-   * JSON true | false <-> Erlang `boolean()`
-   * JSON string value <-> Erlang `binary()`
-   * JSON null <-> Erlang atom `undefined`
+   - JSON object <-> Erlson dictionary
+   - JSON array  <-> Erlang list
+   - JSON number <-> Erlang `number()` (i.e. floats and integers)
+   - JSON true | false <-> Erlang `boolean()`
+   - JSON string value <-> Erlang `binary()`
+   - JSON null <-> Erlang atom `undefined`
 
-* JSON field names are decoded using the following function:
+- JSON field names are decoded using the following function:
 
     ```erlang
     decode_json_field_name(N) ->
@@ -114,10 +147,24 @@ because it can not be directly represented in Erlson when loaded from JSON.
         end.
     ```
 
-* The `erlson:to_json` function supports quoted JSON values represented as
+- The `erlson:to_json` function supports quoted JSON values represented as
   `{json, iodata()}` Erlang terms. The function will write the `iodata()` part
   of this term directly into JSON output. For example, `{json, "{}"}` Erlson
   value will turn into empty JSON object.
+
+- Erlson uses Erlang built-in `binary_to_existing_atom/1` function for
+  converting JSON field names into Erlang atoms. This is to prevent the VM from
+  running out of atom space on malicious JSON input.
+
+  Generally, everything should just work out of the box in compiled projects.
+  However, if you are using Erlson from Erlang shell, not all of your modules
+  and correspondent atoms may be loaded. In this case, JSON field names for
+  unknown atoms will be represented as binaries after parsing. To fix that, you
+  can load all the necessary modules. This can be done, for example, by running
+  this command:
+
+      Modules = [application:get_key(A, modules) || A <- application:loaded_applications()],
+      [ code:load(M) || lists:append(Modules) ].
 
 
 Erlson and property lists
@@ -186,16 +233,16 @@ Limitations
 -----------
 
 Erlson relies on modified versions of Erlang parsers taken from correspondent
-Erlang/OTP releases. While Erlson is fully compatible with R13, R14 and R15
+Erlang/OTP releases. While Erlson is fully compatible with R13, R14, R15 and R16
 Erlang releases, compatibility between Erlson and future Erlang versions can not
 be guaranteed.
 
 Compatibility can break in one of the following ways:
 
-* Erlang adopts Erlson syntax for natively implemented dynamic dictionaries
+- Erlang adopts Erlson syntax for natively implemented dynamic dictionaries
   which will make Erlson obsolete.
 
-* Erlang introduces new unrelated syntax elements conflicting with Erlson
+- Erlang introduces new unrelated syntax elements conflicting with Erlson
   grammar which will make Erlson completely unusable in its current form. In
   response to that, Erlson may adjust its grammar to remain compatible.
 
@@ -215,6 +262,7 @@ add it as dependency in your `rebar.config`. For example:
             {mochiweb, "", {git, "https://github.com/mochi/mochiweb.git", {branch, "master"}}}
         ]}.
 ```
+
 
 Authors
 -------
