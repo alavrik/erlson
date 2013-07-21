@@ -1,3 +1,6 @@
+REBAR ?= rebar
+
+
 .PHONY: all compile test clean
 
 
@@ -5,13 +8,13 @@ all: compile
 
 
 compile:
-	./rebar compile
+	rebar compile
 
 
 test: compile
-	./rebar eunit
+	rebar eunit
 
 
 clean:
-	./rebar clean
+	rebar clean
 
