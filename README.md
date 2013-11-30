@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/alavrik/erlson.png)](https://travis-ci.org/alavrik/erlson)
+
+
 Erlson - Erlang Simple Object Notation
 ======================================
 
