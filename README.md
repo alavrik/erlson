@@ -280,9 +280,6 @@ Authors
 
 Erlson is created by Anton Lavrik <alavrik@piqi.org>.
 
-The first version was written as a [Spawnfest](http://spawnfest.com) submission
-which took the The Erlang Enhancement Prize.
-
 
 License
 -------
