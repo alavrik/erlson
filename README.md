@@ -232,8 +232,8 @@ include it in `.erlang` file):
 ```
 
 
-Limitations
------------
+Erlang compatibility
+--------------------
 
 Erlson relies on modified versions of Erlang parsers taken from correspondent
 Erlang/OTP releases. While Erlson is fully compatible with R13, R14, R15 and R16
@@ -248,6 +248,14 @@ Compatibility can break in one of the following ways:
 - Erlang introduces new unrelated syntax elements conflicting with Erlson
   grammar which will make Erlson completely unusable in its current form. In
   response to that, Erlson may adjust its grammar to remain compatible.
+
+**Update (2014-07-10):** Erlang 17 introduced a new built-in "maps" type. Maps
+syntax, despite of being very similar to Erlson's, is still different enough to
+not cause a conflict. Unfotunately, their syntax similarity may lead to
+confusion and bugs. Please be aware of that when using Erlson with Erlang 17.
+
+Later, we may introduce a slightly different syntax for Erlson dictionaries to
+avoid confusion with maps.
 
 
 Dependencies
