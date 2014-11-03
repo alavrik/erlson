@@ -256,8 +256,10 @@ to_json_term(Dict) ->
     end.
 
 
-% @doc Convert a list of Erlson dictionaries to a JSON array
--spec list_to_json_array/1 :: (List :: [orddict()]) -> iolist().
+% @doc Convert a list of json terms to a JSON array
+-spec list_to_json_array/1 ::
+    (List :: [orddict() | 'undefined' | binary() | atom() | integer() | float()
+            | boolean() | {'json', binary()} | {json, list()}]) -> iolist().
 list_to_json_array(List) ->
     JsonStruct = list_to_json_term(List),
     mochijson2:encode(JsonStruct).
@@ -324,8 +326,9 @@ from_json_term(JsonTerm) ->
     erlang:error('erlson_json_struct_expected', [JsonTerm]).
 
 
-% @doc Create list of Erlson dictionaries from JSON array
--spec list_from_json_array/1 :: (Json :: iodata()) -> [orddict()].
+% @doc Create list of json terms from JSON array
+ -spec list_from_json_array/1 :: (Json :: iodata()) ->
+    [orddict() | binary() | integer() | float() | boolean() | 'undefined'].
 list_from_json_array(Json) ->%, list_to_json_array, list_from_json_term and list_to_json_term
     JsonTerm = mochijson2:decode(Json),
     list_from_json_term(JsonTerm).
