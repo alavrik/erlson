@@ -16,5 +16,5 @@ test: compile
 
 
 clean:
-	rebar clean
+	rebar clean -r
 

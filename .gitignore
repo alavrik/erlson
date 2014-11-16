@@ -11,4 +11,4 @@ erl_parse.erl
 # vim:
 *.swp
 
-/.rebar
+.rebar
