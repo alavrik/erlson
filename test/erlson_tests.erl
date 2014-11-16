@@ -28,15 +28,15 @@
 
 basic_test() ->
     % creating an empty dictionary
-    _ = #{},
+    _ = #[],
 
     % associating foo with 1
-    D = #{foo = 1},
+    D = #[foo = 1],
     1 = D.foo,
-    1 = #{foo = 1}.foo,
+    1 = #[foo = 1].foo,
 
     % setting foo to foo + 1 and baz to 100
-    D1 = D#{foo = D.foo + 1}#{baz = 100},
+    D1 = D#[foo = D.foo + 1]#[baz = 100],
     2 = D1.foo,
     100 = D1.baz,
 
@@ -44,7 +44,7 @@ basic_test() ->
     {'EXIT', {'erlson_not_found', _}} = (catch D.bar),
 
     % several elements
-    D2 = D#{bar = 1, fum = 10, obj = D},
+    D2 = D#[bar = 1, fum = 10, obj = D],
     1 = D2.bar,
     10 = D2.fum,
 
@@ -55,27 +55,27 @@ basic_test() ->
 
 extended_test() ->
     % setting a new dict with a field set to 'true'
-    D = #{foo},
+    D = #[foo],
     true = D.foo,
 
-    D1 = D#{foo = false, bar = 10},
+    D1 = D#[foo = false, bar = 10],
     10 = D1.bar,
     false = D1.foo,
 
     % creating a nested dict
-    D2 = #{foo = #{}},
+    D2 = #[foo = #[]],
 
     % now, setting a field in the nested dict
-    D3 = D2#{foo.bar = 1},
+    D3 = D2#[foo.bar = 1],
     1 = D3.foo.bar,
 
     % setting several fields in the nested dicts
-    D4 = #{
-        foo = #{},
+    D4 = #[
+        foo = #[],
         foo.bar = 1,
-        foo.baz = #{},
+        foo.baz = #[],
         foo.baz.fum % = true
-    },
+    ],
     1 = D4.foo.bar,
     true = D4.foo.baz.fum,
 
@@ -83,7 +83,7 @@ extended_test() ->
 
 
 grammar_test() ->
-    dict_grammar(#{foo = 1}),
+    dict_grammar(#[foo = 1]),
     foo(),
     dict_grammar1(),
     foo1(),
@@ -95,11 +95,11 @@ grammar_test() ->
 
 dict_grammar(D) -> D.foo, D. foo() -> ok.
 
-dict_grammar1() -> #{x = 1}. foo1() -> ok.
+dict_grammar1() -> #[x = 1]. foo1() -> ok.
 
-dict_grammar2() -> #{x = 1}.x. foo2() -> ok.
+dict_grammar2() -> #[x = 1].x. foo2() -> ok.
 
-dict_grammar3() -> D = #{x = 1}, D.x. foo3() -> ok.
+dict_grammar3() -> D = #[x = 1], D.x. foo3() -> ok.
 
 
 json_test() ->
@@ -158,7 +158,7 @@ json1() ->
 
 
 json_empty() ->
-    D = #{},
+    D = #[],
     J = <<"{}">> = iolist_to_binary(erlson:to_json(D)),
 
     ?assert(erlson:from_json(J) =:= D),
@@ -166,7 +166,7 @@ json_empty() ->
 
 
 json_empty_list() ->
-    D = #{foo = []},
+    D = #[foo = []],
     J = <<"{\"foo\":[]}">> = iolist_to_binary(erlson:to_json(D)),
 
     ?assert(erlson:from_json(J) =:= D),
@@ -174,7 +174,7 @@ json_empty_list() ->
 
 
 json_null() ->
-    D = #{foo = 'undefined'},
+    D = #[foo = 'undefined'],
     J = <<"{\"foo\":null}">> = iolist_to_binary(erlson:to_json(D)),
 
     ?assert(erlson:from_json(J) =:= D),
@@ -182,14 +182,14 @@ json_null() ->
 
 
 proplist_test() ->
-    ?assertEqual(#{}, erlson:from_proplist([])),
-    ?assertEqual(#{}, erlson:from_nested_proplist([])),
+    ?assertEqual(#[], erlson:from_proplist([])),
+    ?assertEqual(#[], erlson:from_nested_proplist([])),
 
-    ?assertEqual(#{foo}, erlson:from_proplist([foo])),
-    ?assertEqual(#{foo}, erlson:from_nested_proplist([foo])),
+    ?assertEqual(#[foo], erlson:from_proplist([foo])),
+    ?assertEqual(#[foo], erlson:from_nested_proplist([foo])),
 
-    ?assertEqual(#{foo}, erlson:from_proplist([{foo, true}])),
-    ?assertEqual(#{foo}, erlson:from_nested_proplist([{foo, true}])),
+    ?assertEqual(#[foo], erlson:from_proplist([{foo, true}])),
+    ?assertEqual(#[foo], erlson:from_nested_proplist([{foo, true}])),
 
     L =
          [{description, "Erlang Simple Object Notation"},
@@ -198,18 +198,18 @@ proplist_test() ->
           {applications, [kernel, stdlib]},
           {env, []}],
     D =
-         #{description = "Erlang Simple Object Notation",
+         #[description = "Erlang Simple Object Notation",
            vsn = git,
            modules = [],
            applications = [kernel, stdlib],
-           env = []},
+           env = []],
 
     NestedD =
-         #{description = "Erlang Simple Object Notation",
+         #[description = "Erlang Simple Object Notation",
            vsn = git,
            modules = [],
-           applications = #{kernel, stdlib},
-           env = []},
+           applications = #[kernel, stdlib],
+           env = []],
 
     ?assertEqual(D, erlson:from_proplist(L)),
     ?assertEqual(D, erlson:from_nested_proplist(L,1)),

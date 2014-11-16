@@ -366,8 +366,13 @@ record_fields -> record_field ',' record_fields : ['$1' | '$3'].
 record_field -> var '=' expr : {record_field,?line('$1'),'$1','$3'}.
 record_field -> atom1 '=' expr : {record_field,?line('$1'),'$1','$3'}.
 
+% old pre-R17 syntax -- deprecated starting R17 in favor of the new syntax that
+% looks sufficiently different from maps syntax and doesn't conflict with it
 dict_tuple -> '{' '}' : [].
 dict_tuple -> '{' dict_fields '}' : '$2'.
+% new R17+ syntax
+dict_tuple -> '[' ']' : [].
+dict_tuple -> '[' dict_fields ']' : '$2'.
 
 dict_fields -> dict_field : ['$1'].
 dict_fields -> dict_field ',' dict_fields : ['$1' | '$3'].

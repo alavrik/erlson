@@ -1,6 +1,19 @@
 [![Build Status](https://travis-ci.org/alavrik/erlson.png)](https://travis-ci.org/alavrik/erlson)
 
 
+**Update (2014-11-16): Erlson syntax now uses brackets instead of curly braces.
+
+Erlang 17 introduced a new built-in `maps` type. Maps syntax conflicts with the
+original Erlson syntax that relied on curly braces.
+
+For this reason, we changed Erlson syntax to use brackets instead. Such change
+eliminates grammar conflicts and makes Erlson syntax look sufficiently different
+from maps.
+
+This syntax change is backward compatible. The old syntax is still supported
+with Erlang R16 and earlier releases.
+
+
 Erlson - Erlang Simple Object Notation
 ======================================
 
@@ -13,22 +26,22 @@ Examples:
 
 ```erlang
     % create an empty dictionary
-    X = #{},
+    X = #[],
 
     % associate fields 'foo' with 1, 'bar' with "abc" and 'fum' with 'true'
-    D = #{foo = 1, bar = "abc", fum},
+    D = #[foo = 1, bar = "abc", fum],
 
     % access dictionary element
     1 = D.foo,
 
     % add nested dictionaries to dictionary D
-    D1 = D#{baz = #{fum = #{i = 0}}},
+    D1 = D#[baz = #[fum = #[i = 0]]],
 
     % access elements of the nested dictionary
     0 = D1.baz.fum.i,
 
     % modify elements of the nested dictionary
-    D2 = D1#{baz.fum.i = 100, baz.fum.j = "new nested value"}.
+    D2 = D1#[baz.fum.i = 100, baz.fum.j = "new nested value"].
 
     ...
 
@@ -192,11 +205,11 @@ and
 
 ```erlang
 {application, erlson,
- #{description = "Erlang Simple Object Notation",
+ #[description = "Erlang Simple Object Notation",
    vsn = git,
    modules = [],
    applications = [kernel, stdlib],
-   env = []}}.
+   env = []]].
 ```
 
 
@@ -236,26 +249,14 @@ Erlang compatibility
 --------------------
 
 Erlson relies on modified versions of Erlang parsers taken from correspondent
-Erlang/OTP releases. While Erlson is fully compatible with R13, R14, R15 and R16
-Erlang releases, compatibility between Erlson and future Erlang versions can not
-be guaranteed.
+Erlang/OTP releases. While Erlson is fully compatible with R13, R14, R15, R16,
+R17 Erlang releases, compatibility between Erlson and future Erlang versions can
+not be guaranteed.
 
-Compatibility can break in one of the following ways:
-
-- Erlang adopts Erlson syntax for natively implemented dynamic dictionaries
-  which will make Erlson obsolete.
-
-- Erlang introduces new unrelated syntax elements conflicting with Erlson
-  grammar which will make Erlson completely unusable in its current form. In
-  response to that, Erlson may adjust its grammar to remain compatible.
-
-**Update (2014-07-10):** Erlang 17 introduced a new built-in "maps" type. Maps
-syntax, despite of being very similar to Erlson's, is still different enough to
-not cause a conflict. Unfotunately, their syntax similarity may lead to
-confusion and bugs. Please be aware of that when using Erlson with Erlang 17.
-
-Later, we may introduce a slightly different syntax for Erlson dictionaries to
-avoid confusion with maps.
+Compatibility *can* break if future Erlang versions introduces new unrelated
+syntax elements conflicting with Erlson grammar which will make Erlson
+completely unusable in its current form. In response to that, Erlson may adjust
+its grammar to remain compatible.
 
 
 Dependencies
