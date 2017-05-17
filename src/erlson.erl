@@ -60,7 +60,7 @@
 -type proplist_elem() :: atom() | {atom(), value()}.
 
 
--spec fetch/2 :: (
+-spec fetch(
     Path :: name_path(),
     Dict :: orddict() ) -> value().
 
@@ -78,7 +78,7 @@ fetch(Path, Dict) ->
     end.
 
 
--spec get_value/2 :: (
+-spec get_value(
     Path :: name_path(),
     Dict :: orddict() ) -> value().
 
@@ -86,7 +86,7 @@ get_value(Path, Dict) ->
     get_value(Path, Dict, undefined).
 
 
--spec get_value/3 :: (
+-spec get_value(
     Path :: name_path(),
     Dict :: orddict(),
     Default :: any() ) -> value().
@@ -122,7 +122,7 @@ not_found() ->
     throw('erlson_not_found').
 
 
--spec store/3 :: (
+-spec store(
     Path :: name_path(),
     Value :: any(),
     Dict :: orddict() ) -> orddict().
@@ -155,7 +155,7 @@ store_val(Name, Value, Dict) ->
 %
 % During conversion, each atom() property is converted to {atom(), true}
 % dictionary association.
--spec from_proplist/1 :: (List :: proplist()) -> orddict().
+-spec from_proplist(List :: proplist()) -> orddict().
 
 from_proplist(L) ->
     from_nested_proplist(L, _MaxDepth = 1).
@@ -165,7 +165,7 @@ from_proplist(L) ->
 %
 % During conversion, each atom() property is converted to {atom(), true}
 % dictionary association.
--spec from_nested_proplist/1 :: (List :: proplist()) -> orddict().
+-spec from_nested_proplist(List :: proplist()) -> orddict().
 
 from_nested_proplist(L) ->
     from_nested_proplist(L, _MaxDepth = 'undefined').
@@ -186,7 +186,7 @@ from_nested_proplist(L) ->
 % from_proplist(L) ->
 %     from_nested_proplist(L, _MaxDepth = 1).
 % '''
--spec from_nested_proplist/2 :: (
+-spec from_nested_proplist(
     List :: proplist(),
     MaxDepth :: 'undefined' | pos_integer()) -> orddict().
 
@@ -238,7 +238,7 @@ store_proplist_elem(_X, _Dict, _MaxDepth) ->
 
 
 % @doc Convert Erlson dictionary to a JSON Object
--spec to_json/1 :: (Dict :: orddict()) -> iolist().
+-spec to_json(Dict :: orddict()) -> iolist().
 to_json(Dict) ->
     JsonStruct = to_json_term(Dict),
     mochijson2:encode(JsonStruct).
@@ -257,7 +257,7 @@ to_json_term(Dict) ->
 
 
 % @doc Convert a list of json terms to a JSON array
--spec list_to_json_array/1 ::
+-spec list_to_json_array
     (List :: [orddict() | 'undefined' | binary() | atom() | integer() | float()
             | boolean() | {'json', binary()} | {json, list()}]) -> iolist().
 list_to_json_array(List) ->
@@ -310,7 +310,7 @@ encode_json_term(_) ->
 
 
 % @doc Create Erlson dictionary from JSON Object
--spec from_json/1 :: (Json :: iodata()) -> orddict().
+-spec from_json(Json :: iodata()) -> orddict().
 from_json(Json) ->
     JsonTerm = mochijson2:decode(Json),
     from_json_term(JsonTerm).
@@ -327,7 +327,7 @@ from_json_term(JsonTerm) ->
 
 
 % @doc Create list of json terms from JSON array
- -spec list_from_json_array/1 :: (Json :: iodata()) ->
+-spec list_from_json_array(Json :: iodata()) ->
     [orddict() | binary() | integer() | float() | boolean() | 'undefined'].
 list_from_json_array(Json) ->%, list_to_json_array, list_from_json_term and list_to_json_term
     JsonTerm = mochijson2:decode(Json),
