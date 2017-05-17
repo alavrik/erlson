@@ -18,6 +18,15 @@ case "$OTP_VERSION" in
         17*)
                 echo "r17"
                 ;;
+        18*)
+                echo "r18"
+                ;;
+        19*)
+                echo "r19"
+                ;;
+        20*)
+                echo "r20"
+                ;;
         *)
                 echo "error: unknown Erlang/OTP version: $OTP_VERSION" >&2
                 exit 1
