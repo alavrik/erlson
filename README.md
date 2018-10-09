@@ -1,20 +1,5 @@
 [![Build Status](https://travis-ci.org/alavrik/erlson.png)](https://travis-ci.org/alavrik/erlson)
 
-
-**Update (2014-11-16): Erlson syntax now uses brackets instead of curly
-braces.**
-
-**Erlang 17 introduced a new built-in `maps` type. Maps syntax conflicts with
-the original Erlson syntax that relied on curly braces.**
-
-**For this reason, we changed Erlson syntax to use brackets instead. Such change
-eliminates grammar conflicts and makes Erlson syntax look sufficiently different
-from maps.**
-
-**This syntax change is backward compatible. The old syntax is still supported
-with Erlang R16 and earlier releases.**
-
-
 Erlson - Erlang Simple Object Notation
 ======================================
 
