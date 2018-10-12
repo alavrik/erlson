@@ -1,4 +1,4 @@
-REBAR ?= rebar
+REBAR ?= ./rebar
 
 
 .PHONY: all compile test clean
@@ -8,13 +8,13 @@ all: compile
 
 
 compile:
-	rebar compile
+	$(REBAR) compile
 
 
 test: compile
-	rebar eunit
+	$(REBAR) eunit
 
 
 clean:
-	rebar clean -r
+	$(REBAR) clean -r
 
