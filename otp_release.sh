@@ -30,6 +30,9 @@ case "$OTP_VERSION" in
         21*)
                 echo "r21"
                 ;;
+        22*)
+                echo "r22"
+                ;;
         *)
                 echo "error: unknown Erlang/OTP version: $OTP_VERSION" >&2
                 exit 1
