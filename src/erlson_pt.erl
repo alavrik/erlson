@@ -46,7 +46,41 @@
 -endif.
 
 
-parse_transform(Forms, _Options) ->
+-ifdef(OTP_RELEASE).  % >= R21?
+-define(TRY_CATCH_WITH_STACKTRACE(Expr, Pattern, CatchBody),
+    try
+        Expr
+    catch throw:Pattern:Stacktrace ->
+        CatchBody
+    end
+).
+-else.
+-define(TRY_CATCH_WITH_STACKTRACE(Expr, Pattern, CatchBody),
+    try
+        Expr
+    catch Pattern ->
+        Stacktrace = erlang:get_stacktrace(),
+        CatchBody
+    end
+).
+-endif.
+
+
+parse_transform(Forms, Options) ->
+    ?TRY_CATCH_WITH_STACKTRACE(
+        _Try = parse_transform_1(Forms, Options),
+        _Catch = {missing_rule, Term},
+        _Handle =
+            begin
+                Es = lists:flatten(io_lib:format(
+                    "missing transformation rule for: ~w, "
+                    "stack ~w", [Term, Stacktrace])),
+                exit(Es)
+            end
+    ).
+
+
+parse_transform_1(Forms, _Options) ->
     ?PRINT("PARSE TRANSFORM~n", []),
     try
         lists:flatmap(fun rewrite/1, Forms)
@@ -55,12 +89,7 @@ parse_transform(Forms, _Options) ->
         {error, Es, Line} ->
             File = get_file(),
             Error = {File,[{Line,compile,{parse_transform,?MODULE,Es}}]},
-            {error, [Error], []};
-        {missing_rule, Term} ->
-            Es = lists:flatten(io_lib:format(
-                "missing transformation rule for: ~w, "
-                "stack ~w", [Term, erlang:get_stacktrace()])),
-            exit(Es)
+            {error, [Error], []}
     end.
 
 
